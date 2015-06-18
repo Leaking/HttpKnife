@@ -132,10 +132,8 @@ public class Http {
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 		return null;
@@ -143,8 +141,11 @@ public class Http {
 
 	
 	public Response get(String url,Map<String,String> params) {
-		
-		return null;
+		UrlRewriter rw = new DefaultUriRewriter();
+		url = rw.rewriteWithParam(url, params);
+		System.out.println("encode and add params url =========");
+		System.out.println(url);
+		return get(url);
 	}
 
 	/**

@@ -1,5 +1,8 @@
 package com.httpknife.example;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONObject;
 
 import android.app.Activity;
@@ -73,15 +76,18 @@ public class MainActivity extends Activity {
 		}).start();
     }
     
-    String url = "https://www.v2ex.com/api/members/show.json?username=Livid";
-    
+  // String url = "https://www.v2ex.com/api/members/show.json";
+   String url = "http://www.iciba.com/啊哈哈";
     public void getRequest(){
     	new Thread(new Runnable() {
 			
 			@Override
 			public void run() {
 				Http http = new Http(MainActivity.this,url);
-				Response response = http.get(url);
+				Map<String ,String> params = new HashMap<String,String>();
+//				params.put("store", "allproducts");
+//				params.put("keyword", "first+book");
+				Response response = http.get(url,params);
 				System.out.println(response.statusCode());
 				System.out.println(response.headers());
 				System.out.println(response.body());
