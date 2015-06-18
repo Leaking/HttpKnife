@@ -10,4 +10,11 @@
         android:layout_height="wrap_content"
         android:text="get" />
 
+    <Button
+        android:id="@+id/volleyget"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="volleyget"
+       />
+    
 </LinearLayout>

@@ -1,15 +1,14 @@
 package com.httpknife.library;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.http.Header;
@@ -17,6 +16,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
@@ -70,11 +70,7 @@ public class Http {
 
 	public Http(Context context, String url) {
 		this.context = context;
-		try {
-			openConnection(new URL(url));
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
+
 	}
 
 	/**
@@ -96,7 +92,11 @@ public class Http {
 		connection.setReadTimeout(DEFAULT_READ_TIMEOUT_MS);
 		connection.setUseCaches(true);
 		connection.setDoInput(true);
-		connection.setDoOutput(true);
+		// 需要传入数据才用这个，否则容易报出method not allow
+		// connection.setDoOutput(true);
+		
+		
+		//URLEncodedUtils.format(parameters, encoding)
 	}
 
 	private void addHeaders(HashMap<String, String> headers) {
@@ -122,15 +122,29 @@ public class Http {
 		return userAgent;
 	}
 
-	public void get() {
+	public Response get(String url) {
 		try {
+			openConnection(new URL(url));
 			connection.setRequestMethod(Method.GET);
-			responseFromConnection();
+			HttpResponse httpResponse = responseFromConnection();
+			Response response = new Response(httpResponse);
+			return response;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		return null;
+	}
+
+	
+	public Response get(String url,Map<String,String> params) {
+		
+		return null;
 	}
 
 	/**
@@ -162,10 +176,6 @@ public class Http {
 		}
 		StatusLine responseStatus = new BasicStatusLine(protocolVersion,
 				connection.getResponseCode(), connection.getResponseMessage());
-		System.out.println("status line -----");
-		System.out.println(responseStatus.getStatusCode());
-		System.out.println(responseStatus.getReasonPhrase());
-		System.out.println(responseStatus.getProtocolVersion());
 		return responseStatus;
 	}
 
@@ -186,20 +196,6 @@ public class Http {
 		entity.setContentLength(connection.getContentLength());
 		entity.setContentEncoding(connection.getContentEncoding());
 		entity.setContentType(connection.getContentType());
-		// 取得输入流，并使用Reader读取
-		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-		System.out.println("=============================");
-		System.out.println("Contents of get request");
-		System.out.println("=============================");
-		String lines;
-		try {
-			while ((lines = reader.readLine()) != null) {
-				System.out.println(lines);
-			}
-			reader.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		return entity;
 	}
 
@@ -209,17 +205,14 @@ public class Http {
 	 * @param response
 	 */
 	public void headersFromConnection(HttpResponse response) {
-		System.out.println("reponse headers ========");
 		for (Entry<String, List<String>> header : connection.getHeaderFields()
 				.entrySet()) {
 			if (header.getKey() != null) {
-				System.out.println("name = " + header.getKey() + "values = " + header.getValue());
 				Header h = new BasicHeader(header.getKey(), header.getValue()
 						.get(0));
 				response.addHeader(h);
 			}
 		}
 	}
-	
-	
+
 }
