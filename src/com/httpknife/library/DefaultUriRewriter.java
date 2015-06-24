@@ -6,7 +6,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -73,12 +76,70 @@ public class DefaultUriRewriter implements UrlRewriter {
 	 * @return
 	 */
 	public StringBuilder addParam(String name, Object value,StringBuilder finalUrl){
-		finalUrl.append(name);
-		finalUrl.append("=");
-		if (value != null)
-			finalUrl.append(value);
+		if (value != null && value.getClass().isArray())
+			value = arrayToList(value);
+		
+		//数组格式的值
+		if (value instanceof Iterable<?>) {
+			Iterator<?> iterator = ((Iterable<?>) value).iterator();
+			while (iterator.hasNext()) {
+				finalUrl.append(name);
+				finalUrl.append("[]=");
+				Object element = iterator.next();
+				if (element != null)
+					finalUrl.append(element);
+				if (iterator.hasNext())
+					finalUrl.append("&");
+			}
+		} else {
+			finalUrl.append(name);
+			finalUrl.append("=");
+			if (value != null)
+				finalUrl.append(value);
+		}
+
 		return finalUrl;
 	}
+	
+	/**
+	 * 数组转化为List
+	 * @param array
+	 * @return
+	 */
+	private static List<Object> arrayToList(final Object array) {
+		if (array instanceof Object[])
+			return Arrays.asList((Object[]) array);
+
+		List<Object> result = new ArrayList<Object>();
+		// Arrays of the primitive types can't be cast to array of Object, so
+		// this:
+		if (array instanceof int[])
+			for (int value : (int[]) array)
+				result.add(value);
+		else if (array instanceof boolean[])
+			for (boolean value : (boolean[]) array)
+				result.add(value);
+		else if (array instanceof long[])
+			for (long value : (long[]) array)
+				result.add(value);
+		else if (array instanceof float[])
+			for (float value : (float[]) array)
+				result.add(value);
+		else if (array instanceof double[])
+			for (double value : (double[]) array)
+				result.add(value);
+		else if (array instanceof short[])
+			for (short value : (short[]) array)
+				result.add(value);
+		else if (array instanceof byte[])
+			for (byte value : (byte[]) array)
+				result.add(value);
+		else if (array instanceof char[])
+			for (char value : (char[]) array)
+				result.add(value);
+		return result;
+	}
+
 	
 	
 	@Override

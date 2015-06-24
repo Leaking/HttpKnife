@@ -140,13 +140,25 @@ public class Http {
 	}
 
 	
-	public Response get(String url,Map<String,String> params) {
+	public Response get(String url,Map<?,?> params) {
 		UrlRewriter rw = new DefaultUriRewriter();
 		url = rw.rewriteWithParam(url, params);
 		System.out.println("encode and add params url =========");
 		System.out.println(url);
 		return get(url);
 	}
+	
+	public Response put(String url,Map<?,?> params){
+		
+		
+		return null;
+		
+	}
+	
+	
+	
+	
+	
 
 	/**
 	 * 获取响应报文

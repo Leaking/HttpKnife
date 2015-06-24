@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
     }
     
   // String url = "https://www.v2ex.com/api/members/show.json";
-   String url = "http://www.iciba.com/啊哈哈";
+   String url = "https://www.v2ex.com/api/members/show.json";
     public void getRequest(){
     	new Thread(new Runnable() {
 			
@@ -85,13 +85,13 @@ public class MainActivity extends Activity {
 			public void run() {
 				Http http = new Http(MainActivity.this,url);
 				Map<String ,String> params = new HashMap<String,String>();
-//				params.put("store", "allproducts");
+				params.put("username", "Livid");
 //				params.put("keyword", "first+book");
 				Response response = http.get(url,params);
-				System.out.println(response.statusCode());
-				System.out.println(response.headers());
-				System.out.println(response.body());
-				System.out.println(response.json());
+//				System.out.println(response.statusCode());
+//				System.out.println(response.headers());
+//				System.out.println(response.body());
+//				System.out.println(response.json());
 			}
 		}).start();
     }
