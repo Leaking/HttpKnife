@@ -2,10 +2,12 @@ package com.httpknife.library;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +44,6 @@ public class Http {
 		String PATCH = "PATCH";
 	}
 
-	public interface DefaultRequestHeaderValue {
 		public static final String CHARSET_UTF8 = "UTF-8";
 		/**
 		 * 提交字符串形式的键值对，post请求
@@ -53,7 +54,7 @@ public class Http {
 		 * 'application/json' content type header value
 		 */
 		public static final String CONTENT_TYPE_JSON = "application/json";
-	}
+	
 
 	public interface RequestHeader {
 		public static final String USER_AGENT = "User-Agent";
@@ -149,13 +150,43 @@ public class Http {
 	}
 	
 	public Response put(String url,Map<?,?> params){
-		
+		try {
+			connection.setRequestMethod(Method.POST);
+			connection.setDoOutput(true);
+			String contentType = getBodyContentType(CONTENT_TYPE_FORM, getParamsEncoding());
+			addHeader(RequestHeader.CONTENT_TYPE,contentType);
+
+			
+		} catch (ProtocolException e) {
+			e.printStackTrace();
+		}
 		
 		return null;
+	}
+	
+	public byte[] form(Map<String,String> params,String encoding){
+		 StringBuilder encodedParams = new StringBuilder();
+	        try {
+	            for (Map.Entry<String, String> entry : params.entrySet()) {
+	                encodedParams.append(URLEncoder.encode(entry.getKey(), encoding));
+	                encodedParams.append('=');
+	                encodedParams.append(URLEncoder.encode(entry.getValue(), encoding));
+	                encodedParams.append('&');
+	            }
+	            return encodedParams.toString().getBytes(encoding);
+	        } catch (UnsupportedEncodingException uee) {
+	            throw new RuntimeException("Encoding not supported: " + encoding, uee);
+	        }
 		
 	}
 	
+	public String getBodyContentType(String contentType,String charset){
+		return contentType + "; charset=" + charset;
+	}
 	
+	public String getParamsEncoding(){
+		return CHARSET_UTF8;
+	}
 	
 	
 	
