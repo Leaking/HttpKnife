@@ -1,5 +1,6 @@
 package com.httpknife.library;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -18,7 +19,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
@@ -69,7 +69,7 @@ public class Http {
 	private int responseCode;
 	private Context context;
 
-	public Http(Context context, String url) {
+	public Http(Context context) {
 		this.context = context;
 
 	}
@@ -149,20 +149,31 @@ public class Http {
 		return get(url);
 	}
 	
-	public Response put(String url,Map<?,?> params){
+	
+	public Response post(String url,Map<String,String> params){
 		try {
+			openConnection(new URL(url));
 			connection.setRequestMethod(Method.POST);
 			connection.setDoOutput(true);
 			String contentType = getBodyContentType(CONTENT_TYPE_FORM, getParamsEncoding());
 			addHeader(RequestHeader.CONTENT_TYPE,contentType);
-
-			
+			byte[] body = form(params,getParamsEncoding());
+			DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+			out.write(body);
+			out.close();
+			HttpResponse httpResponse = responseFromConnection();
+			Response response = new Response(httpResponse);
+			return response;
 		} catch (ProtocolException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		return null;
 	}
+	
 	
 	public byte[] form(Map<String,String> params,String encoding){
 		 StringBuilder encodedParams = new StringBuilder();

@@ -38,7 +38,7 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				getRequest();
+				postRequest();
 			}
 		});
         btnVolly.setOnClickListener(new OnClickListener() {
@@ -83,34 +83,41 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void run() {
-				Http http = new Http(MainActivity.this,url);
+				Http http = new Http(MainActivity.this);
 				Map<String ,String> params = new HashMap<String,String>();
 				params.put("username", "Livid");
 //				params.put("keyword", "first+book");
 				Response response = http.get(url,params);
-//				System.out.println(response.statusCode());
-//				System.out.println(response.headers());
-//				System.out.println(response.body());
-//				System.out.println(response.json());
+				testResult(response);
 			}
 		}).start();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
+    public void postRequest(){
+    	final String url = "http://httpbin.org/post";
+    	new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				Http http = new Http(MainActivity.this);
+				Map<String ,String> params = new HashMap<String,String>();
+				params.put("username", "Livid");
+				Response response = http.post(url, params);
+				testResult(response);
+			}
+		}).start();
     }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    
+    
+    public void testResult(Response response){
+    	System.out.println(response.statusCode());
+		System.out.println(response.headers());
+		System.out.println(response.body());
+		System.out.println(response.json());
     }
+    
+    
+    
+    
+   
 }
