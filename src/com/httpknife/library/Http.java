@@ -1,6 +1,7 @@
 package com.httpknife.library;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -44,17 +45,22 @@ public class Http {
 		String PATCH = "PATCH";
 	}
 
-		public static final String CHARSET_UTF8 = "UTF-8";
-		/**
-		 * 提交字符串形式的键值对，post请求
-		 */
-		public static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
+	public static final String CHARSET_UTF8 = "UTF-8";
+	/**
+	 * 提交字符串形式的键值对，post请求
+	 */
+	public static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
 
-		/**
-		 * 'application/json' content type header value
-		 */
-		public static final String CONTENT_TYPE_JSON = "application/json";
+	/**
+	 * 'application/json' content type header value
+	 */
+	public static final String CONTENT_TYPE_JSON = "application/json";
 	
+	
+	private static final String BOUNDARY = "00content0boundary00";
+
+	private static final String CONTENT_TYPE_MULTIPART = "multipart/form-data; boundary="
+			+ BOUNDARY;
 
 	public interface RequestHeader {
 		public static final String USER_AGENT = "User-Agent";
@@ -95,9 +101,8 @@ public class Http {
 		connection.setDoInput(true);
 		// 需要传入数据才用这个，否则容易报出method not allow
 		// connection.setDoOutput(true);
-		
-		
-		//URLEncodedUtils.format(parameters, encoding)
+
+		// URLEncodedUtils.format(parameters, encoding)
 	}
 
 	private void addHeaders(HashMap<String, String> headers) {
@@ -136,29 +141,65 @@ public class Http {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+		}
 		return null;
 	}
 
-	
-	public Response get(String url,Map<?,?> params) {
+	public Response get(String url, Map<?, ?> params) {
 		UrlRewriter rw = new DefaultUriRewriter();
 		url = rw.rewriteWithParam(url, params);
 		System.out.println("encode and add params url =========");
 		System.out.println(url);
 		return get(url);
 	}
+
 	
-	
-	public Response post(String url,Map<String,String> params){
+	private void post(String url) throws ProtocolException, MalformedURLException{
+		openConnection(new URL(url));
+		connection.setRequestMethod(Method.POST);
+		connection.setDoOutput(true);
+	}
+	/**
+	 * 
+	 * @param url
+	 * @param params
+	 * @param filename
+	 * @param fileParamName
+	 * @param file
+	 * @return
+	 */
+	public Response post(String url, Map<String, String> params,
+			String filename, String fileParamName, File file) {
 		try {
-			openConnection(new URL(url));
-			connection.setRequestMethod(Method.POST);
-			connection.setDoOutput(true);
-			String contentType = getBodyContentType(CONTENT_TYPE_FORM, getParamsEncoding());
-			addHeader(RequestHeader.CONTENT_TYPE,contentType);
-			byte[] body = form(params,getParamsEncoding());
-			DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+			post(url);
+			addHeader(RequestHeader.CONTENT_TYPE, getMutiPartBodyContentType());
+			
+			
+		} catch (ProtocolException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+
+	/**
+	 * post提交键值对
+	 * 
+	 * @param url
+	 * @param params
+	 * @return
+	 */
+	public Response post(String url, Map<String, String> params) {
+		try {
+			post(url);
+			String contentType = getBodyContentType(CONTENT_TYPE_FORM,
+					getParamsEncoding());
+			addHeader(RequestHeader.CONTENT_TYPE, contentType);
+			byte[] body = form(params, getParamsEncoding());
+			DataOutputStream out = new DataOutputStream(
+					connection.getOutputStream());
 			out.write(body);
 			out.close();
 			HttpResponse httpResponse = responseFromConnection();
@@ -167,40 +208,49 @@ public class Http {
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		return null;
+	}
+
+	public byte[] form(Map<String,String> params, String encoding, String filename, String fileParamName, File file) {
+		
 		
 		return null;
 	}
 	
+	public byte[] form(Map<String, String> params, String encoding) {
+		StringBuilder encodedParams = new StringBuilder();
+		try {
+			for (Map.Entry<String, String> entry : params.entrySet()) {
+				encodedParams
+						.append(URLEncoder.encode(entry.getKey(), encoding));
+				encodedParams.append('=');
+				encodedParams.append(URLEncoder.encode(entry.getValue(),
+						encoding));
+				encodedParams.append('&');
+			}
+			return encodedParams.toString().getBytes(encoding);
+		} catch (UnsupportedEncodingException uee) {
+			throw new RuntimeException("Encoding not supported: " + encoding,
+					uee);
+		}
+
+	}
+
 	
-	public byte[] form(Map<String,String> params,String encoding){
-		 StringBuilder encodedParams = new StringBuilder();
-	        try {
-	            for (Map.Entry<String, String> entry : params.entrySet()) {
-	                encodedParams.append(URLEncoder.encode(entry.getKey(), encoding));
-	                encodedParams.append('=');
-	                encodedParams.append(URLEncoder.encode(entry.getValue(), encoding));
-	                encodedParams.append('&');
-	            }
-	            return encodedParams.toString().getBytes(encoding);
-	        } catch (UnsupportedEncodingException uee) {
-	            throw new RuntimeException("Encoding not supported: " + encoding, uee);
-	        }
-		
+	public String getMutiPartBodyContentType(){
+		return CONTENT_TYPE_MULTIPART;
 	}
 	
-	public String getBodyContentType(String contentType,String charset){
+	public String getBodyContentType(String contentType, String charset) {
 		return contentType + "; charset=" + charset;
 	}
-	
-	public String getParamsEncoding(){
+
+	public String getParamsEncoding() {
 		return CHARSET_UTF8;
 	}
-	
-	
-	
 
 	/**
 	 * 获取响应报文
