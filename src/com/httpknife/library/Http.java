@@ -2,6 +2,7 @@ package com.httpknife.library;
 
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -9,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +47,8 @@ public class Http {
 		String PATCH = "PATCH";
 	}
 
+	private static final String CRLF = "\r\n";
+
 	public static final String CHARSET_UTF8 = "UTF-8";
 	/**
 	 * 提交字符串形式的键值对，post请求
@@ -55,12 +59,17 @@ public class Http {
 	 * 'application/json' content type header value
 	 */
 	public static final String CONTENT_TYPE_JSON = "application/json";
-	
-	
+
 	private static final String BOUNDARY = "00content0boundary00";
 
 	private static final String CONTENT_TYPE_MULTIPART = "multipart/form-data; boundary="
 			+ BOUNDARY;
+
+	private static final String MUTIPART_BEGIN_LINE = "--" + BOUNDARY + CRLF;
+	private static final String MUTIPART_MIDDLE_LINE = CRLF + "--" + BOUNDARY
+			+ CRLF;
+	private static final String MUTIPART_END_LINE = CRLF + "--" + BOUNDARY
+			+ "--" + CRLF;
 
 	public interface RequestHeader {
 		public static final String USER_AGENT = "User-Agent";
@@ -153,12 +162,13 @@ public class Http {
 		return get(url);
 	}
 
-	
-	private void post(String url) throws ProtocolException, MalformedURLException{
+	private void post(String url) throws ProtocolException,
+			MalformedURLException {
 		openConnection(new URL(url));
 		connection.setRequestMethod(Method.POST);
 		connection.setDoOutput(true);
 	}
+
 	/**
 	 * 
 	 * @param url
@@ -169,18 +179,22 @@ public class Http {
 	 * @return
 	 */
 	public Response post(String url, Map<String, String> params,
-			String filename, String fileParamName, File file) {
+			String name, String filename, File file) {
 		try {
 			post(url);
 			addHeader(RequestHeader.CONTENT_TYPE, getMutiPartBodyContentType());
-			
-			
+			form(params, null, name, filename, file);
+			HttpResponse httpResponse = responseFromConnection();
+			Response response = new Response(httpResponse);
+			return response;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		
+
 		return null;
 	}
 
@@ -214,12 +228,63 @@ public class Http {
 		return null;
 	}
 
-	public byte[] form(Map<String,String> params, String encoding, String filename, String fileParamName, File file) {
-		
-		
-		return null;
+	public void form(Map<String, String> params, String encoding,
+			String name, String filename, File file) {
+		try {
+			DataOutputStream dos = new DataOutputStream(
+					connection.getOutputStream());
+			dos.writeBytes(MUTIPART_BEGIN_LINE);
+			if (params != null) {
+				for (Entry<String, String> entry : params.entrySet()) {
+					partString(dos, entry.getKey(), entry.getValue());
+					dos.writeBytes(MUTIPART_MIDDLE_LINE);
+				}
+			}
+			partFile(dos, name, filename, file);
+			dos.writeBytes(MUTIPART_END_LINE);
+			dos.flush();
+			dos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
-	
+
+	public void partString(DataOutputStream dos, String key, String value)
+			throws IOException {
+		if(value == null || value.isEmpty())
+			throw new IllegalArgumentException("上传键值对不能为空");
+		dos.writeBytes("Content-Disposition: form-data; name=\"" + key + "\""
+				+ CRLF);
+		dos.writeBytes(CRLF);
+		dos.writeBytes(value);
+		dos.writeBytes(CRLF);
+	}
+
+	public void partFile(DataOutputStream dos, String name,
+			String fileName, File file) throws IOException {
+		if(name == null || file == null)
+			return;
+		if(fileName == null || fileName.isEmpty()){
+			throw new IllegalArgumentException("上次文件的文件名不能为空");
+		}
+		dos.writeBytes("Content-Disposition: form-data; name=\"" + name
+				+ "\";filename=\"" + fileName + "\"" + CRLF);
+		dos.writeBytes("Content-Type: "
+				+ URLConnection.guessContentTypeFromName(fileName));
+		dos.writeBytes(CRLF);
+		System.out.println("guessContentTypeFromName "
+				+ URLConnection.guessContentTypeFromName(fileName));
+		FileInputStream inputStream = new FileInputStream(file);
+		byte[] buffer = new byte[4096];
+		int bytesRead = -1;
+		while ((bytesRead = inputStream.read(buffer)) != -1) {
+			dos.write(buffer, 0, bytesRead);
+		}
+		dos.writeBytes(CRLF);
+		inputStream.close();
+	}
+
 	public byte[] form(Map<String, String> params, String encoding) {
 		StringBuilder encodedParams = new StringBuilder();
 		try {
@@ -239,11 +304,10 @@ public class Http {
 
 	}
 
-	
-	public String getMutiPartBodyContentType(){
+	public String getMutiPartBodyContentType() {
 		return CONTENT_TYPE_MULTIPART;
 	}
-	
+
 	public String getBodyContentType(String contentType, String charset) {
 		return contentType + "; charset=" + charset;
 	}

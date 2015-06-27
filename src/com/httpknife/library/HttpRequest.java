@@ -821,7 +821,6 @@ public class HttpRequest {
 		public RequestOutputStream(final OutputStream stream,
 				final String charset, final int bufferSize) {
 			super(stream, bufferSize);
-
 			encoder = Charset.forName(getValidCharset(charset)).newEncoder();
 		}
 
@@ -2940,7 +2939,7 @@ public class HttpRequest {
 			final String contentType, final File part)
 			throws HttpRequestException {
 		final InputStream stream;
-		try {
+		try { 
 			stream = new BufferedInputStream(new FileInputStream(part));
 			incrementTotalSize(part.length());
 		} catch (IOException e) {
