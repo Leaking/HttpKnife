@@ -48,7 +48,6 @@ public class Http {
 	}
 
 	private static final String CRLF = "\r\n";
-
 	public static final String CHARSET_UTF8 = "UTF-8";
 	/**
 	 * 提交字符串形式的键值对，post请求
@@ -79,12 +78,14 @@ public class Http {
 	public static final int DEFAULT_READ_TIMEOUT_MS = 2500;
 
 	private HttpURLConnection connection;
-	private int responseCode;
 	private Context context;
 
+	/**
+	 * 构造器
+	 * @param context
+	 */
 	public Http(Context context) {
 		this.context = context;
-
 	}
 
 	/**
@@ -131,6 +132,12 @@ public class Http {
 		return userAgent;
 	}
 
+	
+	/**
+	 * 不带参数的get请求
+	 * @param url
+	 * @return
+	 */
 	public Response get(String url) {
 		try {
 			openConnection(new URL(url));
@@ -148,6 +155,13 @@ public class Http {
 		return null;
 	}
 
+	
+	/**
+	 * 带参数的get请求
+	 * @param url
+	 * @param params
+	 * @return
+	 */
 	public Response get(String url, Map<?, ?> params) {
 		UrlRewriter rw = new DefaultUriRewriter();
 		url = rw.rewriteWithParam(url, params);
@@ -156,6 +170,13 @@ public class Http {
 		return get(url);
 	}
 
+	
+	/**
+	 * post请求初始化
+	 * @param url
+	 * @throws ProtocolException
+	 * @throws MalformedURLException
+	 */
 	private void post(String url) throws ProtocolException,
 			MalformedURLException {
 		openConnection(new URL(url));
@@ -164,7 +185,7 @@ public class Http {
 	}
 
 	/**
-	 * 
+	 * post请求，mutipart类型
 	 * @param url
 	 * @param params
 	 * @param filename
@@ -222,6 +243,15 @@ public class Http {
 		return null;
 	}
 
+	
+	/**
+	 * post表格，包含字键值，文件
+	 * @param params
+	 * @param encoding
+	 * @param name
+	 * @param filename
+	 * @param file
+	 */
 	public void form(Map<String, String> params, String encoding,
 			String name, String filename, File file) {
 		try {
@@ -231,7 +261,6 @@ public class Http {
 			if (params != null) {
 				for (Entry<String, String> entry : params.entrySet()) {
 					partString(dos, entry.getKey(), entry.getValue());
-					//dos.writeBytes(MUTIPART_MIDDLE_LINE);
 				}
 			}
 			partFile(dos, name, filename, file);
@@ -244,6 +273,14 @@ public class Http {
 
 	}
 
+	
+	/**
+	 * 提交字符串
+	 * @param dos
+	 * @param key
+	 * @param value
+	 * @throws IOException
+	 */
 	public void partString(DataOutputStream dos, String key, String value)
 			throws IOException {
 		if(value == null || value.isEmpty())
@@ -255,6 +292,15 @@ public class Http {
 		dos.writeBytes(CRLF);
 	}
 
+	
+	/**
+	 * 提交文件
+	 * @param dos
+	 * @param name
+	 * @param fileName
+	 * @param file
+	 * @throws IOException
+	 */
 	public void partFile(DataOutputStream dos, String name,
 			String fileName, File file) throws IOException {
 		if(name == null || file == null)
@@ -280,6 +326,13 @@ public class Http {
 		inputStream.close();
 	}
 
+	
+	/** 
+	 * post请求表单  x-www-form-urlencoded
+	 * @param params
+	 * @param encoding
+	 * @return
+	 */
 	public byte[] form(Map<String, String> params, String encoding) {
 		StringBuilder encodedParams = new StringBuilder();
 		try {
@@ -299,14 +352,28 @@ public class Http {
 
 	}
 
+	/**
+	 * 后去mutipart的contenttype
+	 * @return
+	 */
 	public String getMutiPartBodyContentType() {
 		return CONTENT_TYPE_MULTIPART;
 	}
 
+	/**
+	 * 请求主体媒体类型以及编码格式
+	 * @param contentType
+	 * @param charset
+	 * @return
+	 */
 	public String getBodyContentType(String contentType, String charset) {
 		return contentType + "; charset=" + charset;
 	}
 
+	/**
+	 * 请求主体编码格式
+	 * @return
+	 */
 	public String getParamsEncoding() {
 		return CHARSET_UTF8;
 	}
