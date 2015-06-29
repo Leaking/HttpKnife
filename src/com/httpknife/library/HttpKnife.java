@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -27,11 +28,13 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 
+import com.httpknife.library.HttpRequest.HttpRequestException;
+
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 
-public class Http {
+public class HttpKnife {
 
 	/**
 	 * Supported request methods.
@@ -67,6 +70,10 @@ public class Http {
 	private static final String MUTIPART_LINE = "--" + BOUNDARY + CRLF;
 	private static final String MUTIPART_END_LINE = "--" + BOUNDARY
 			+ "--" + CRLF;
+	private static final String GZIP = "gzip";
+	private static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding";
+	private static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
+	
 
 	public interface RequestHeader {
 		public static final String USER_AGENT = "User-Agent";
@@ -84,7 +91,7 @@ public class Http {
 	 * 构造器
 	 * @param context
 	 */
-	public Http(Context context) {
+	public HttpKnife(Context context) {
 		this.context = context;
 	}
 
@@ -119,6 +126,15 @@ public class Http {
 		connection.setRequestProperty(name, value);
 	}
 
+	
+	public String getResponseheader(final String name) throws HttpRequestException {
+		return connection.getHeaderField(name);
+	}
+	
+	public void acceptGzipEncoding(){
+		addHeader(HEADER_ACCEPT_ENCODING, GZIP);
+	}
+	
 	public String getCustomUserAgent() {
 		String userAgent = "Request/0";
 		try {
@@ -414,8 +430,9 @@ public class Http {
 	 * 获取响应报文实体
 	 * 
 	 * @return
+	 * @throws IOException 
 	 */
-	private HttpEntity entityFromConnection() {
+	private HttpEntity entityFromConnection() throws IOException {
 		BasicHttpEntity entity = new BasicHttpEntity();
 		InputStream inputStream;
 		try {
@@ -423,7 +440,11 @@ public class Http {
 		} catch (IOException ioe) {
 			inputStream = connection.getErrorStream();
 		}
-		entity.setContent(inputStream);
+		if(getResponseheader(HEADER_CONTENT_ENCODING).equals(GZIP)){
+			entity.setContent(new GZIPInputStream(inputStream));
+		}else{
+			entity.setContent(inputStream);
+		}
 		entity.setContentLength(connection.getContentLength());
 		entity.setContentEncoding(connection.getContentEncoding());
 		entity.setContentType(connection.getContentType());

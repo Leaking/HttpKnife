@@ -10,7 +10,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
-import com.httpknife.library.Http;
+import com.httpknife.library.HttpKnife;
 import com.httpknife.library.Response;
 
 
@@ -55,7 +55,7 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void run() {
-				Http http = new Http(MainActivity.this);
+				HttpKnife http = new HttpKnife(MainActivity.this);
 				Map<String ,String> params = new HashMap<String,String>();
 				params.put("username", "Livid");
 //				params.put("keyword", "first+book");
@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void run() {
-				Http http = new Http(MainActivity.this);
+				HttpKnife http = new HttpKnife(MainActivity.this);
 				Map<String ,String> params = new HashMap<String,String>();
 				params.put("username", "Livid");
 				Response response = http.post(url, params);
@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void run() {
-				Http http = new Http(MainActivity.this);
+				HttpKnife http = new HttpKnife(MainActivity.this);
 				Map<String ,String> params = new HashMap<String,String>();
 				params.put("userID", "638fa451-cfc6-4650-9d0d-9e0bc6b322cf");
 				params.put("familyID", "2555e078-5113-42aa-ab4c-757f6cc226c9");
@@ -98,6 +98,13 @@ public class MainActivity extends Activity {
 				testResult(response);
 			}
 		}).start();
+    }
+    
+    public void getGZIPRequest(){
+    	final String url = "http://httpbin.org/gzip";
+    	
+    	
+    	
     }
     
     
