@@ -65,10 +65,8 @@ public class Http {
 	private static final String CONTENT_TYPE_MULTIPART = "multipart/form-data; boundary="
 			+ BOUNDARY;
 
-	private static final String MUTIPART_BEGIN_LINE = "--" + BOUNDARY + CRLF;
-	private static final String MUTIPART_MIDDLE_LINE = CRLF + "--" + BOUNDARY
-			+ CRLF;
-	private static final String MUTIPART_END_LINE = CRLF + "--" + BOUNDARY
+	private static final String MUTIPART_LINE = "--" + BOUNDARY + CRLF;
+	private static final String MUTIPART_END_LINE = "--" + BOUNDARY
 			+ "--" + CRLF;
 
 	public interface RequestHeader {
@@ -108,10 +106,6 @@ public class Http {
 		connection.setReadTimeout(DEFAULT_READ_TIMEOUT_MS);
 		connection.setUseCaches(true);
 		connection.setDoInput(true);
-		// 需要传入数据才用这个，否则容易报出method not allow
-		// connection.setDoOutput(true);
-
-		// URLEncodedUtils.format(parameters, encoding)
 	}
 
 	private void addHeaders(HashMap<String, String> headers) {
@@ -233,11 +227,11 @@ public class Http {
 		try {
 			DataOutputStream dos = new DataOutputStream(
 					connection.getOutputStream());
-			dos.writeBytes(MUTIPART_BEGIN_LINE);
+			dos.writeBytes(MUTIPART_LINE);
 			if (params != null) {
 				for (Entry<String, String> entry : params.entrySet()) {
 					partString(dos, entry.getKey(), entry.getValue());
-					dos.writeBytes(MUTIPART_MIDDLE_LINE);
+					//dos.writeBytes(MUTIPART_MIDDLE_LINE);
 				}
 			}
 			partFile(dos, name, filename, file);
@@ -272,6 +266,7 @@ public class Http {
 				+ "\";filename=\"" + fileName + "\"" + CRLF);
 		dos.writeBytes("Content-Type: "
 				+ URLConnection.guessContentTypeFromName(fileName));
+		dos.writeBytes(CRLF);
 		dos.writeBytes(CRLF);
 		System.out.println("guessContentTypeFromName "
 				+ URLConnection.guessContentTypeFromName(fileName));
