@@ -74,7 +74,8 @@ public class HttpKnife {
 	private static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding";
 	private static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
 	
-
+	private boolean isGzip = false;
+	
 	public interface RequestHeader {
 		public static final String USER_AGENT = "User-Agent";
 		public static final String CONTENT_TYPE = "Content-Type";
@@ -123,6 +124,9 @@ public class HttpKnife {
 	}
 
 	public void addHeader(String name, String value) {
+		if(connection == null){
+			throw new IllegalStateException("You have not build the connection");
+		}
 		connection.setRequestProperty(name, value);
 	}
 
@@ -131,8 +135,9 @@ public class HttpKnife {
 		return connection.getHeaderField(name);
 	}
 	
-	public void acceptGzipEncoding(){
-		addHeader(HEADER_ACCEPT_ENCODING, GZIP);
+	public HttpKnife gzip(){
+		isGzip = true;
+		return this;
 	}
 	
 	public String getCustomUserAgent() {
@@ -401,6 +406,8 @@ public class HttpKnife {
 	 * @throws IOException
 	 */
 	private HttpResponse responseFromConnection() throws IOException {
+		if(isGzip)
+			addHeader(HEADER_ACCEPT_ENCODING, GZIP);
 		BasicHttpResponse response = new BasicHttpResponse(
 				statusLineFromConnection());
 		response.setEntity(entityFromConnection());
