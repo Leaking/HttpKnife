@@ -1,11 +1,14 @@
 package com.httpknife.example;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -15,12 +18,8 @@ import com.httpknife.library.Response;
 
 public class MainActivity extends Activity {
 
-	// 06-27 15:40:00.990: I/ApiClient(24633): upload userid =
-	// 638fa451-cfc6-4650-9d0d-9e0bc6b322cf
-	// 06-27 15:40:00.990: I/ApiClient(24633): upload f_id =
-	// 2555e078-5113-42aa-ab4c-757f6cc226c9
-	// 06-27 15:40:00.990: I/ApiClient(24633): upload description = gggg
 
+	private static final String LOG_TAG = "MainActivity";
 	Button btnGet;
 	Button btnVolly;
 
@@ -34,7 +33,7 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				getGZIPRequest();
+				postFileRequest();
 			}
 		});
 		btnVolly.setOnClickListener(new OnClickListener() {
@@ -86,7 +85,7 @@ public class MainActivity extends Activity {
 	 * 上传文件请求 not ok
 	 */
 	public void postFileRequest() {
-		final String url = "http://sales.yun.pingan.com:80/family_chat/uploadFile.do";
+		final String url = "http://httpbin.org/post";
 		new Thread(new Runnable() {
 
 			@Override
@@ -99,13 +98,33 @@ public class MainActivity extends Activity {
 
 				File file = new File(
 						"/storage/emulated/0/Android/data/com.pingan.family.application/cache/cropImage/IMG_20150627_160812.jpg");
+				File tempFile = createTempFile("gggg.txt",1223);
 				Response response = http.post(url, params, "file",
-						"IMG_20150627_160812.jpg", file);
+						"gggg", tempFile);
 				testResult(response);
 			}
 		}).start();
 	}
 
+	
+	public File createTempFile(String namePart, int byteSize) {
+        try {
+            File f = File.createTempFile(namePart, "_handled", getCacheDir());
+            FileOutputStream fos = new FileOutputStream(f);
+            Random r = new Random();
+            byte[] buffer = new byte[byteSize];
+            r.nextBytes(buffer);
+            fos.write(buffer);
+            fos.flush();
+            fos.close();
+            return f;
+        } catch (Throwable t) {
+            Log.e(LOG_TAG, "createTempFile failed", t);
+        }
+        return null;
+    }
+	
+	
 	/**
 	 * gzip请求 ok
 	 */
