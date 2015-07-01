@@ -1,2 +1,5 @@
 # HttpKnife
-Java HTTP Request Library
+
+a Java HTTP Request Library based on URLConnection.
+
+

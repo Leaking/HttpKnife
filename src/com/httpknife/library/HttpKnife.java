@@ -51,16 +51,16 @@ public class HttpKnife {
 	}
 
 	private static final String CRLF = "\r\n";
-	public static final String CHARSET_UTF8 = "UTF-8";
+	private static final String CHARSET_UTF8 = "UTF-8";
 	/**
 	 * 提交字符串形式的键值对，post请求
 	 */
-	public static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
+	private static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
 
 	/**
 	 * 'application/json' content type header value
 	 */
-	public static final String CONTENT_TYPE_JSON = "application/json";
+	private static final String CONTENT_TYPE_JSON = "application/json";
 
 	private static final String BOUNDARY = "00content0boundary00";
 
@@ -71,17 +71,19 @@ public class HttpKnife {
 	private static final String MUTIPART_END_LINE = "--" + BOUNDARY + "--"
 			+ CRLF;
 	private static final String GZIP = "gzip";
-	private static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding";
-	private static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
 
 	private boolean isGzip = false;
 
 	public interface RequestHeader {
+		public static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding";
 		public static final String USER_AGENT = "User-Agent";
 		public static final String CONTENT_TYPE = "Content-Type";
-
 	}
 
+	public interface ResponseHeader {
+		public static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
+	}
+	
 	public static final int DEFAULT_CONNECT_TIMEOUT_MS = 2500;
 	public static final int DEFAULT_READ_TIMEOUT_MS = 2500;
 
@@ -491,7 +493,7 @@ public class HttpKnife {
 	 */
 	public Response responseFromConnection() throws IOException {
 		if (isGzip)
-			addHeader(HEADER_ACCEPT_ENCODING, GZIP);
+			addHeader(RequestHeader.HEADER_ACCEPT_ENCODING, GZIP);
 		BasicHttpResponse httpResponse = new BasicHttpResponse(
 				statusLineFromConnection());
 		httpResponse.setEntity(entityFromConnection());
@@ -533,7 +535,7 @@ public class HttpKnife {
 		} catch (IOException ioe) {
 			inputStream = connection.getErrorStream();
 		}
-		if (GZIP.equals(getResponseheader(HEADER_CONTENT_ENCODING))) {
+		if (GZIP.equals(getResponseheader(ResponseHeader.HEADER_CONTENT_ENCODING))) {
 			entity.setContent(new GZIPInputStream(inputStream));
 		} else {
 			entity.setContent(inputStream);
