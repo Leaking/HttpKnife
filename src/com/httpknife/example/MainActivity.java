@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
+import com.httpknife.library.Base64;
 import com.httpknife.library.HttpKnife;
 import com.httpknife.library.Response;
 
@@ -33,7 +34,8 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				postFileRequest();
+				System.out.println("clickckckc");
+				author("github nickname","github password");
 			}
 		});
 		btnVolly.setOnClickListener(new OnClickListener() {
@@ -57,7 +59,7 @@ public class MainActivity extends Activity {
 				Map<String, String> params = new HashMap<String, String>();
 				params.put("username", "Livid");
 				// params.put("keyword", "first+book");
-				Response response = http.get(url, params);
+				Response response = http.get(url, params).response();
 				testResult(response);
 			}
 		}).start();
@@ -75,7 +77,7 @@ public class MainActivity extends Activity {
 				HttpKnife http = new HttpKnife(MainActivity.this);
 				Map<String, String> params = new HashMap<String, String>();
 				params.put("username", "Livid");
-				Response response = http.post(url, params);
+				Response response = http.post(url, params).response();
 				testResult(response);
 			}
 		}).start();
@@ -100,7 +102,7 @@ public class MainActivity extends Activity {
 						"/storage/emulated/0/Android/data/com.pingan.family.application/cache/cropImage/IMG_20150627_160812.jpg");
 				File tempFile = createTempFile("gggg.txt",1223);
 				Response response = http.post(url, params, "file",
-						"gggg", tempFile);
+						"gggg", tempFile).response();
 				testResult(response);
 			}
 		}).start();
@@ -135,11 +137,33 @@ public class MainActivity extends Activity {
 			@Override
 			public void run() {
 				HttpKnife http = new HttpKnife(MainActivity.this).gzip();
-				Response response = http.get(url);
+				Response response = http.get(url).response();
 				testResult(response);
 			}
 		}).start();
 
+	}
+	
+	public void author(final String username, final String password){
+		final String url = "https://api.github.com/user";
+		
+		
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				HttpKnife http = new HttpKnife(MainActivity.this);
+				Map<String,String> headers = new HashMap<String,String>();
+				headers.put("Accept", "application/vnd.github.beta+json");
+				headers.put("User-Agent", "GitHubJava/2.1.0");
+				headers.put("Authorization", "Basic " + Base64.encode(username + ':' + password));
+				Response response = http.get(url).headers(headers).response();
+				testResult(response);
+			}
+		}).start();
+		
+
+		
 	}
 
 	public void testResult(Response response) {

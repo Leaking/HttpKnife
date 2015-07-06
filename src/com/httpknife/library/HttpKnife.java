@@ -28,7 +28,7 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 
-import com.httpknife.library.HttpRequest.HttpRequestException;
+import com.httpknife.library.HttpRequest.Base64;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -78,17 +78,20 @@ public class HttpKnife {
 		public static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding";
 		public static final String USER_AGENT = "User-Agent";
 		public static final String CONTENT_TYPE = "Content-Type";
+		public static final String AUTHORIZATION = "Authorization";
+
 	}
 
 	public interface ResponseHeader {
 		public static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
 	}
-	
+
 	public static final int DEFAULT_CONNECT_TIMEOUT_MS = 2500;
 	public static final int DEFAULT_READ_TIMEOUT_MS = 2500;
 
 	private HttpURLConnection connection;
 	private Context context;
+	private Map<String,String> customHeaders;
 
 	/**
 	 * 构造器
@@ -133,8 +136,7 @@ public class HttpKnife {
 		connection.setRequestProperty(name, value);
 	}
 
-	public String getResponseheader(final String name)
-			throws HttpRequestException {
+	public String getResponseheader(final String name) {
 		return connection.getHeaderField(name);
 	}
 
@@ -156,17 +158,45 @@ public class HttpKnife {
 		return userAgent;
 	}
 
+	public HttpKnife headers(Map<String,String> headers){
+		for(String key:headers.keySet()){
+			addHeader(key, headers.get(key));
+		}
+		return this;
+	}
+	
+	
+	
 	/**
 	 * 不带参数的get请求
 	 * 
 	 * @param url
 	 * @return
 	 */
-	public Response get(String url) {
+	public HttpKnife get(String url) {
 		try {
 			openConnection(new URL(url));
 			connection.setRequestMethod(Method.GET);
-			Response response = responseFromConnection();
+			return this;
+		} catch (ProtocolException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} 
+		return null;
+	}
+
+	
+	public Response getWithHeader(String url,Map<String,String> headers){
+		try {
+			openConnection(new URL(url));
+			connection.setRequestMethod(Method.GET);
+			for(String key:headers.keySet()){
+				addHeader(key, headers.get(key));
+			}
+			
+			
+			Response response = response();
 			return response;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
@@ -177,7 +207,9 @@ public class HttpKnife {
 		}
 		return null;
 	}
-
+	
+	
+	
 	/**
 	 * 带参数的get请求
 	 * 
@@ -185,7 +217,7 @@ public class HttpKnife {
 	 * @param params
 	 * @return
 	 */
-	public Response get(String url, Map<?, ?> params) {
+	public HttpKnife get(String url, Map<?, ?> params) {
 		UrlRewriter rw = new DefaultUriRewriter();
 		url = rw.rewriteWithParam(url, params);
 		System.out.println("encode and add params url =========");
@@ -217,21 +249,18 @@ public class HttpKnife {
 	 * @param file
 	 * @return
 	 */
-	public Response post(String url, Map<String, String> params, String name,
+	public HttpKnife post(String url, Map<String, String> params, String name,
 			String filename, File file) {
 		try {
 			post(url);
 			addHeader(RequestHeader.CONTENT_TYPE, getMutiPartBodyContentType());
 			form(params, null, name, filename, file);
-			Response response = responseFromConnection();
-			return response;
+			return this;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		} 
 
 		return null;
 	}
@@ -243,7 +272,7 @@ public class HttpKnife {
 	 * @param params
 	 * @return
 	 */
-	public Response post(String url, Map<String, String> params) {
+	public HttpKnife post(String url, Map<String, String> params) {
 		try {
 			post(url);
 			String contentType = getBodyContentType(CONTENT_TYPE_FORM,
@@ -254,8 +283,7 @@ public class HttpKnife {
 					connection.getOutputStream());
 			out.write(body);
 			out.close();
-			Response response = responseFromConnection();
-			return response;
+			return this;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -402,105 +430,110 @@ public class HttpKnife {
 	public String getParamsEncoding() {
 		return CHARSET_UTF8;
 	}
-	
-	
-	public Response put(String url){
-		return null;
+
+	public HttpKnife put(String url) {
+		return this;
 	}
-	
-	public Response delete(String url){
+
+	public HttpKnife delete(String url) {
 		try {
 			openConnection(new URL(url));
 			connection.setRequestMethod(Method.DELETE);
-			Response response = responseFromConnection();
-			return response;
+			return this;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		} 
 		return null;
 	}
 
-	public Response head(String url) {
+	public HttpKnife head(String url) {
 		try {
 			openConnection(new URL(url));
 			connection.setRequestMethod(Method.HEAD);
-			Response response = responseFromConnection();
-			return response;
+			return this;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;	}
-
-	public Response option(String url) {
-		try {
-			openConnection(new URL(url));
-			connection.setRequestMethod(Method.OPTIONS);
-			Response response = responseFromConnection();
-			return response;
-		} catch (ProtocolException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;	}
-
-	public Response trace(String url) {
-		try {
-			openConnection(new URL(url));
-			connection.setRequestMethod(Method.TRACE);
-			Response response = responseFromConnection();
-			return response;
-		} catch (ProtocolException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		} 
 		return null;
 	}
 
-	public Response PATCH(String url) {
+	public HttpKnife option(String url) {
 		try {
 			openConnection(new URL(url));
-			connection.setRequestMethod(Method.PATCH);
-			Response response = responseFromConnection();
-			return response;
+			connection.setRequestMethod(Method.OPTIONS);
+			return this;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;	}
+		} 
+		return null;
+	}
 
+	public HttpKnife trace(String url) {
+		try {
+			openConnection(new URL(url));
+			connection.setRequestMethod(Method.TRACE);
+			return this;
+		} catch (ProtocolException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} 
+		return null;
+	}
+
+	public HttpKnife patch(String url) {
+		try {
+			openConnection(new URL(url));
+			connection.setRequestMethod(Method.PATCH);
+			return this;
+		} catch (ProtocolException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} 
+		return null;
+	}
+
+	
+	
+	/**
+	 * Basic Authorization
+	 * @param username
+	 * @param password
+	 */
+	public void basicAuthorization(String username,String password){
+		addHeader(RequestHeader.AUTHORIZATION, "Basic " + Base64.encode(username + ':' + password));
+	}
+	
+	
+	
 	/**
 	 * 获取响应报文
 	 * 
 	 * @return
 	 * @throws IOException
 	 */
-	public Response responseFromConnection() throws IOException {
-		if (isGzip)
-			addHeader(RequestHeader.HEADER_ACCEPT_ENCODING, GZIP);
-		BasicHttpResponse httpResponse = new BasicHttpResponse(
-				statusLineFromConnection());
-		httpResponse.setEntity(entityFromConnection());
-		headersFromConnection(httpResponse);
-		Response response = new Response(httpResponse);
-		return response;
+	public Response response(){
+		try {
+			if (isGzip)
+				addHeader(RequestHeader.HEADER_ACCEPT_ENCODING, GZIP);
+			BasicHttpResponse httpResponse = new BasicHttpResponse(
+					statusLineFromConnection());
+			httpResponse.setEntity(entityFromConnection());
+			headersFromConnection(httpResponse);
+			Response response = new Response(httpResponse);
+			return response;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
+		return null;
 	}
 
 	/**
