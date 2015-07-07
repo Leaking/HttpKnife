@@ -39,7 +39,6 @@ public class MainActivity extends Activity {
 			public void onClick(View v) {
 				System.out.println("clickckckc");
 				getGZIPRequest();
-				//token("Leaking","3982895898github");
 			}
 		});
 		btnVolly.setOnClickListener(new OnClickListener() {
