@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
@@ -35,7 +38,8 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				System.out.println("clickckckc");
-				author("github nickname","github password");
+				getGZIPRequest();
+				//token("Leaking","3982895898github");
 			}
 		});
 		btnVolly.setOnClickListener(new OnClickListener() {
@@ -77,14 +81,19 @@ public class MainActivity extends Activity {
 				HttpKnife http = new HttpKnife(MainActivity.this);
 				Map<String, String> params = new HashMap<String, String>();
 				params.put("username", "Livid");
-				Response response = http.post(url, params).response();
+				
+				Map<String, String> params2 = new HashMap<String, String>();
+				params2.put("uuuuuu", "sssss");
+				
+				
+				Response response = http.post(url).form(params).form(params2).response();
 				testResult(response);
 			}
 		}).start();
 	}
 
 	/**
-	 * 上传文件请求 not ok
+	 * 上传文件请求 ok
 	 */
 	public void postFileRequest() {
 		final String url = "http://httpbin.org/post";
@@ -101,8 +110,8 @@ public class MainActivity extends Activity {
 				File file = new File(
 						"/storage/emulated/0/Android/data/com.pingan.family.application/cache/cropImage/IMG_20150627_160812.jpg");
 				File tempFile = createTempFile("gggg.txt",1223);
-				Response response = http.post(url, params, "file",
-						"gggg", tempFile).response();
+				Response response = http.post(url).mutipart(params, "test",
+						"file.txt", tempFile).response();
 				testResult(response);
 			}
 		}).start();
@@ -136,12 +145,11 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void run() {
-				HttpKnife http = new HttpKnife(MainActivity.this).gzip();
-				Response response = http.get(url).response();
+				HttpKnife http = new HttpKnife(MainActivity.this);
+				Response response = http.get(url).gzip().response();
 				testResult(response);
 			}
 		}).start();
-
 	}
 	
 	public void author(final String username, final String password){
@@ -165,6 +173,38 @@ public class MainActivity extends Activity {
 
 		
 	}
+	
+	public void token(final String username, final String password){
+		final String url = "https://api.github.com/authorizations";
+		
+		
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				HttpKnife http = new HttpKnife(MainActivity.this);
+				Map<String,String> headers = new HashMap<String,String>();
+				headers.put("Accept", "application/vnd.github.beta+json");
+				headers.put("User-Agent", "GitHubJava/2.1.0");
+				headers.put("Authorization", "Basic " + Base64.encode(username + ':' + password));
+				
+				JSONObject json = new JSONObject();
+				try {
+					json.put("note", "为什么呢");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				
+				Response response = http.post(url).headers(headers).json(json).response();
+				testResult(response);
+			}
+		}).start();
+		
+
+		
+	}
+	
+	
 
 	public void testResult(Response response) {
 		System.out.println(response.statusCode());

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -27,8 +28,7 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
-
-import com.httpknife.library.HttpRequest.Base64;
+import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -72,7 +72,6 @@ public class HttpKnife {
 			+ CRLF;
 	private static final String GZIP = "gzip";
 
-	private boolean isGzip = false;
 
 	public interface RequestHeader {
 		public static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding";
@@ -90,8 +89,10 @@ public class HttpKnife {
 	public static final int DEFAULT_READ_TIMEOUT_MS = 2500;
 
 	private HttpURLConnection connection;
+	private boolean connect = false;
+	private OutputStream output;
 	private Context context;
-	private Map<String,String> customHeaders;
+	private Map<String, String> customHeaders;
 
 	/**
 	 * 构造器
@@ -141,7 +142,7 @@ public class HttpKnife {
 	}
 
 	public HttpKnife gzip() {
-		isGzip = true;
+		addHeader(RequestHeader.HEADER_ACCEPT_ENCODING, GZIP);
 		return this;
 	}
 
@@ -158,15 +159,13 @@ public class HttpKnife {
 		return userAgent;
 	}
 
-	public HttpKnife headers(Map<String,String> headers){
-		for(String key:headers.keySet()){
+	public HttpKnife headers(Map<String, String> headers) {
+		for (String key : headers.keySet()) {
 			addHeader(key, headers.get(key));
 		}
 		return this;
 	}
-	
-	
-	
+
 	/**
 	 * 不带参数的get请求
 	 * 
@@ -182,34 +181,10 @@ public class HttpKnife {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} 
-		return null;
-	}
-
-	
-	public Response getWithHeader(String url,Map<String,String> headers){
-		try {
-			openConnection(new URL(url));
-			connection.setRequestMethod(Method.GET);
-			for(String key:headers.keySet()){
-				addHeader(key, headers.get(key));
-			}
-			
-			
-			Response response = response();
-			return response;
-		} catch (ProtocolException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 		return null;
 	}
-	
-	
-	
+
 	/**
 	 * 带参数的get请求
 	 * 
@@ -232,11 +207,17 @@ public class HttpKnife {
 	 * @throws ProtocolException
 	 * @throws MalformedURLException
 	 */
-	private void post(String url) throws ProtocolException,
-			MalformedURLException {
-		openConnection(new URL(url));
-		connection.setRequestMethod(Method.POST);
-		connection.setDoOutput(true);
+	public HttpKnife post(String url) {
+		try {
+			openConnection(new URL(url));
+			connection.setRequestMethod(Method.POST);
+			connection.setDoOutput(true);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (ProtocolException e) {
+			e.printStackTrace();
+		}
+		return this;
 	}
 
 	/**
@@ -249,47 +230,57 @@ public class HttpKnife {
 	 * @param file
 	 * @return
 	 */
-	public HttpKnife post(String url, Map<String, String> params, String name,
-			String filename, File file) {
-		try {
-			post(url);
-			addHeader(RequestHeader.CONTENT_TYPE, getMutiPartBodyContentType());
-			form(params, null, name, filename, file);
-			return this;
-		} catch (ProtocolException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} 
 
-		return null;
+	public OutputStream openOutput() throws IOException {
+		if (connect)
+			return output;
+		else {
+			output = connection.getOutputStream();
+			connect = true;
+			return output;
+		}
 	}
 
-	/**
-	 * post提交键值对
-	 * 
-	 * @param url
-	 * @param params
-	 * @return
-	 */
-	public HttpKnife post(String url, Map<String, String> params) {
+	public HttpKnife form(Map<String, String> params) {
 		try {
-			post(url);
-			String contentType = getBodyContentType(CONTENT_TYPE_FORM,
+			if (!connect) {
+				String contentType = getBodyContentType(CONTENT_TYPE_FORM,
+						getParamsEncoding());
+				addHeader(RequestHeader.CONTENT_TYPE, contentType);
+			}
+			String encoding = getParamsEncoding();
+			StringBuilder encodedParams = new StringBuilder();
+			for (Map.Entry<String, String> entry : params.entrySet()) {
+				encodedParams
+						.append(URLEncoder.encode(entry.getKey(), encoding));
+				encodedParams.append('=');
+				encodedParams.append(URLEncoder.encode(entry.getValue(),
+						encoding));
+				encodedParams.append('&');
+			}
+			byte[] body = encodedParams.toString().getBytes(encoding);
+			DataOutputStream out = new DataOutputStream(openOutput());
+			out.write(body);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return this;
+	}
+
+	public HttpKnife json(JSONObject json) {
+		try {
+			String contentType = getBodyContentType(CONTENT_TYPE_JSON,
 					getParamsEncoding());
 			addHeader(RequestHeader.CONTENT_TYPE, contentType);
-			byte[] body = form(params, getParamsEncoding());
-			DataOutputStream out = new DataOutputStream(
-					connection.getOutputStream());
+			byte[] body = json.toString().getBytes(getParamsEncoding());
+			DataOutputStream out = new DataOutputStream(openOutput());
 			out.write(body);
-			out.close();
 			return this;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 		return null;
 	}
 
@@ -302,24 +293,32 @@ public class HttpKnife {
 	 * @param filename
 	 * @param file
 	 */
-	public void form(Map<String, String> params, String encoding, String name,
+	public HttpKnife mutipart(Map<String, String> params, String name,
 			String filename, File file) {
 		try {
-			DataOutputStream dos = new DataOutputStream(
-					connection.getOutputStream());
-			dos.writeBytes(MUTIPART_LINE);
+			addHeader(RequestHeader.CONTENT_TYPE, getMutiPartBodyContentType());
+			DataOutputStream dos = new DataOutputStream(openOutput());
 			if (params != null) {
 				for (Entry<String, String> entry : params.entrySet()) {
-					partString(dos, entry.getKey(), entry.getValue());
+					dos.writeBytes(MUTIPART_LINE);
+					partString(entry.getKey(), entry.getValue());
 				}
 			}
-			partFile(dos, name, filename, file);
+			if (name == null || file == null){
+				dos.writeBytes(MUTIPART_END_LINE);
+				return this;
+			}
+			if (filename == null || filename.isEmpty()) {
+				throw new IllegalArgumentException("上次文件的文件名不能为空");
+			}
+			dos.writeBytes(MUTIPART_LINE);
+			partFile(name, filename, file);
 			dos.writeBytes(MUTIPART_END_LINE);
-			dos.flush();
-			dos.close();
+			return this;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return null;
 
 	}
 
@@ -331,15 +330,16 @@ public class HttpKnife {
 	 * @param value
 	 * @throws IOException
 	 */
-	public void partString(DataOutputStream dos, String key, String value)
-			throws IOException {
+	public HttpKnife partString(String key, String value) throws IOException {
 		if (value == null || value.isEmpty())
 			throw new IllegalArgumentException("上传键值对不能为空");
+		DataOutputStream dos = new DataOutputStream(openOutput());
 		dos.writeBytes("Content-Disposition: form-data; name=\"" + key + "\""
 				+ CRLF);
 		dos.writeBytes(CRLF);
 		dos.writeBytes(value);
 		dos.writeBytes(CRLF);
+		return this;
 	}
 
 	/**
@@ -351,13 +351,9 @@ public class HttpKnife {
 	 * @param file
 	 * @throws IOException
 	 */
-	public void partFile(DataOutputStream dos, String name, String fileName,
-			File file) throws IOException {
-		if (name == null || file == null)
-			return;
-		if (fileName == null || fileName.isEmpty()) {
-			throw new IllegalArgumentException("上次文件的文件名不能为空");
-		}
+	public HttpKnife partFile(String name, String fileName, File file)
+			throws IOException {
+		DataOutputStream dos = new DataOutputStream(openOutput());
 		dos.writeBytes("Content-Disposition: form-data; name=\"" + name
 				+ "\";filename=\"" + fileName + "\"" + CRLF);
 		dos.writeBytes("Content-Type: "
@@ -374,32 +370,7 @@ public class HttpKnife {
 		}
 		dos.writeBytes(CRLF);
 		inputStream.close();
-	}
-
-	/**
-	 * post请求表单 x-www-form-urlencoded
-	 * 
-	 * @param params
-	 * @param encoding
-	 * @return
-	 */
-	public byte[] form(Map<String, String> params, String encoding) {
-		StringBuilder encodedParams = new StringBuilder();
-		try {
-			for (Map.Entry<String, String> entry : params.entrySet()) {
-				encodedParams
-						.append(URLEncoder.encode(entry.getKey(), encoding));
-				encodedParams.append('=');
-				encodedParams.append(URLEncoder.encode(entry.getValue(),
-						encoding));
-				encodedParams.append('&');
-			}
-			return encodedParams.toString().getBytes(encoding);
-		} catch (UnsupportedEncodingException uee) {
-			throw new RuntimeException("Encoding not supported: " + encoding,
-					uee);
-		}
-
+		return this;
 	}
 
 	/**
@@ -444,7 +415,7 @@ public class HttpKnife {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} 
+		}
 		return null;
 	}
 
@@ -457,7 +428,7 @@ public class HttpKnife {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} 
+		}
 		return null;
 	}
 
@@ -470,7 +441,7 @@ public class HttpKnife {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} 
+		}
 		return null;
 	}
 
@@ -483,7 +454,7 @@ public class HttpKnife {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} 
+		}
 		return null;
 	}
 
@@ -496,33 +467,33 @@ public class HttpKnife {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		} 
+		}
 		return null;
 	}
 
-	
-	
 	/**
 	 * Basic Authorization
+	 * 
 	 * @param username
 	 * @param password
 	 */
-	public void basicAuthorization(String username,String password){
-		addHeader(RequestHeader.AUTHORIZATION, "Basic " + Base64.encode(username + ':' + password));
+	public void basicAuthorization(String username, String password) {
+		addHeader(RequestHeader.AUTHORIZATION,
+				"Basic " + Base64.encode(username + ':' + password));
 	}
-	
-	
-	
+
 	/**
 	 * 获取响应报文
 	 * 
 	 * @return
 	 * @throws IOException
 	 */
-	public Response response(){
+	public Response response() {
 		try {
-			if (isGzip)
-				addHeader(RequestHeader.HEADER_ACCEPT_ENCODING, GZIP);
+			if (connect) {
+				output.flush();
+				output.close();
+			}
 			BasicHttpResponse httpResponse = new BasicHttpResponse(
 					statusLineFromConnection());
 			httpResponse.setEntity(entityFromConnection());
