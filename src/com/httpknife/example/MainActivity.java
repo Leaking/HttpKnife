@@ -6,26 +6,34 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response.ErrorListener;
+import com.android.volley.Response.Listener;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.httpknife.library.Base64;
 import com.httpknife.library.HttpKnife;
 import com.httpknife.library.Response;
 
 public class MainActivity extends Activity {
 
-
 	private static final String LOG_TAG = "MainActivity";
 	Button btnGet;
 	Button btnVolly;
+	Handler handler;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -33,24 +41,28 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		btnGet = (Button) findViewById(R.id.get);
 		btnVolly = (Button) findViewById(R.id.volleyget);
+		handler = new Handler(){
+			
+		};
 		btnGet.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
 				System.out.println("clickckckc");
-				getGZIPRequest();
+				//loginWithToken();
 			}
 		});
 		btnVolly.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
+				volleyEvnent();
 			}
 		});
 	}
 
 	/**
-	 * get请求，带参数以及不带参数 ok 
+	 * get请求，带参数以及不带参数 ok
 	 */
 	public void getRequest() {
 		final String url = "https://www.v2ex.com/api/members/show.json";
@@ -80,12 +92,12 @@ public class MainActivity extends Activity {
 				HttpKnife http = new HttpKnife(MainActivity.this);
 				Map<String, String> params = new HashMap<String, String>();
 				params.put("username", "Livid");
-				
+
 				Map<String, String> params2 = new HashMap<String, String>();
 				params2.put("uuuuuu", "sssss");
-				
-				
-				Response response = http.post(url).form(params).form(params2).response();
+
+				Response response = http.post(url).form(params).form(params2)
+						.response();
 				testResult(response);
 			}
 		}).start();
@@ -108,33 +120,32 @@ public class MainActivity extends Activity {
 
 				File file = new File(
 						"/storage/emulated/0/Android/data/com.pingan.family.application/cache/cropImage/IMG_20150627_160812.jpg");
-				File tempFile = createTempFile("gggg.txt",1223);
-				Response response = http.post(url).mutipart(params, "test",
-						"file.txt", tempFile).response();
+				File tempFile = createTempFile("gggg.txt", 1223);
+				Response response = http.post(url)
+						.mutipart(params, "test", "file.txt", tempFile)
+						.response();
 				testResult(response);
 			}
 		}).start();
 	}
 
-	
 	public File createTempFile(String namePart, int byteSize) {
-        try {
-            File f = File.createTempFile(namePart, "_handled", getCacheDir());
-            FileOutputStream fos = new FileOutputStream(f);
-            Random r = new Random();
-            byte[] buffer = new byte[byteSize];
-            r.nextBytes(buffer);
-            fos.write(buffer);
-            fos.flush();
-            fos.close();
-            return f;
-        } catch (Throwable t) {
-            Log.e(LOG_TAG, "createTempFile failed", t);
-        }
-        return null;
-    }
-	
-	
+		try {
+			File f = File.createTempFile(namePart, "_handled", getCacheDir());
+			FileOutputStream fos = new FileOutputStream(f);
+			Random r = new Random();
+			byte[] buffer = new byte[byteSize];
+			r.nextBytes(buffer);
+			fos.write(buffer);
+			fos.flush();
+			fos.close();
+			return f;
+		} catch (Throwable t) {
+			Log.e(LOG_TAG, "createTempFile failed", t);
+		}
+		return null;
+	}
+
 	/**
 	 * gzip请求 ok
 	 */
@@ -150,66 +161,178 @@ public class MainActivity extends Activity {
 			}
 		}).start();
 	}
-	
-	public void author(final String username, final String password){
+
+	public void author(final String username, final String password) {
 		final String url = "https://api.github.com/user";
-		
-		
+
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				HttpKnife http = new HttpKnife(MainActivity.this);
-				Map<String,String> headers = new HashMap<String,String>();
+				Map<String, String> headers = new HashMap<String, String>();
 				headers.put("Accept", "application/vnd.github.beta+json");
 				headers.put("User-Agent", "GitHubJava/2.1.0");
-				headers.put("Authorization", "Basic " + Base64.encode(username + ':' + password));
+				headers.put("Authorization",
+						"Basic " + Base64.encode(username + ':' + password));
 				Response response = http.get(url).headers(headers).response();
 				testResult(response);
 			}
 		}).start();
-		
 
-		
 	}
-	
-	public void token(final String username, final String password){
-		final String url = "https://api.github.com/authorizations";
-		
-		
+
+	public void loginWithToken() {
+		final String url = "https://api.github.com/user";
+
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				HttpKnife http = new HttpKnife(MainActivity.this);
-				Map<String,String> headers = new HashMap<String,String>();
+				Map<String, String> headers = new HashMap<String, String>();
 				headers.put("Accept", "application/vnd.github.beta+json");
 				headers.put("User-Agent", "GitHubJava/2.1.0");
-				headers.put("Authorization", "Basic " + Base64.encode(username + ':' + password));
-				
-				JSONObject json = new JSONObject();
-				try {
-					json.put("note", "为什么呢");
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-				
-				Response response = http.post(url).headers(headers).json(json).response();
+				headers.put("Authorization",
+						"Token 5xxxxxxxxx66182463da54fc911f7de7224d58");
+				Response response = http.get(url).headers(headers).response();
 				testResult(response);
 			}
 		}).start();
-		
+	}
 
-		
+	
+	
+	public void getOrCreateToken(final String username,final String password){
+		final String url = "https://api.github.com/authorizations";
+
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				HttpKnife http = new HttpKnife(MainActivity.this);
+				Map<String, String> headers = new HashMap<String, String>();
+				headers.put("Accept", "application/vnd.github.beta+json");
+				headers.put("User-Agent", "GitHubJava/2.1.0");
+				headers.put("Authorization",
+						"Basic " + Base64.encode(username + ':' + password));
+
+				JSONObject json = new JSONObject();
+				try {
+					json.put("note", "Git 22222n Demo");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+
+				Response response = http.get(url).headers(headers)
+						.response();
+				testResult(response);
+			}
+		}).start();
+
 	}
 	
+	
+	
+	public void token(final String username, final String password) {
+		final String url = "https://api.github.com/authorizations";
+
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				HttpKnife http = new HttpKnife(MainActivity.this);
+				Map<String, String> headers = new HashMap<String, String>();
+				headers.put("Accept", "application/vnd.github.beta+json");
+				headers.put("User-Agent", "GitHubJava/2.1.0");
+				headers.put("Authorization",
+						"Basic " + Base64.encode(username + ':' + password));
+
+				JSONObject json = new JSONObject();
+				try {
+					json.put("note", "Git  Demo");
+					json.put("client_id", "c98401xxxxxf5f549509");
+					json.put("client_secret", "f3afc8xxxx7223220273118fb52cc59bb3eaab8");
+					json.put("note_url", "https://github.com/Leaking/GIthubKnife");
+
+						
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+
+				Response response = http.post(url).headers(headers).json(json)
+						.response();
+				testResult(response);
+			}
+		}).start();
+
+	}
+	
+	public void events(){
+		final String url = "https://api.github.com/users/Leaking/received_events?page=1&per_page=10";
+
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				HttpKnife http = new HttpKnife(MainActivity.this);
+				Map<String, String> headers = new HashMap<String, String>();
+				headers.put("Accept", "application/vnd.github.beta+json");
+				headers.put("User-Agent", "GitHubJava/2.1.0");
+				headers.put("Authorization",
+						"Token xxxxxxxxxxb6c22e25e64fff6f9dc7618a7f54f9733");
+
+				Response response = http.get(url).headers(headers).response();
+				try {
+					JSONArray jsonArray = new JSONArray(response.body());
+					for(int i = 0; i < jsonArray.length(); i++){
+						System.out.println(jsonArray.get(i));
+					}
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				//testResult(response);
+			}
+		}).start();
+	}
+	
+	public void volleyEvnent(){
+//		final String url = "https://api.github.com/users/Leaking/received_events?page=2";
+		final String url = "https://api.github.com/users/Leaking/received_events/public";
+
+		
+		Map<String, String> headers = new HashMap<String, String>();
+		headers.put("Accept", "application/vnd.github.beta+json");
+		headers.put("User-Agent", "GitHubJava/2.1.0");
+//		headers.put("Authorization",
+//				"Token xxxxxxb6c22e25e64fff6f9dc7618a7f54f9733");
+		RequestQueue queue = Volley.newRequestQueue(this);
+		JsonObjectRequest rq = new JsonObjectRequest(headers, url, null, new Listener<JSONObject>() {
+
+			@Override
+			public void onResponse(JSONObject response) {
+				// TODO Auto-generated method stub
+				System.out.println("response =====");
+				System.out.println(response.toString());
+			}
+		}, new ErrorListener() {
+
+			@Override
+			public void onErrorResponse(VolleyError error) {
+				// TODO Auto-generated method stub
+				System.out.println("error =====");
+				System.out.println(error);
+			}
+		});
+		queue.add(rq);
+	}
 	
 
 	public void testResult(Response response) {
 		System.out.println(response.statusCode());
 		System.out.println(response.headers());
 		System.out.println(response.body());
-		System.out.println(response.json());
+		System.out.println(response.jsonArray());
 	}
 
 }

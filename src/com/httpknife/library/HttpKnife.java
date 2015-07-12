@@ -403,6 +403,15 @@ public class HttpKnife {
 	}
 
 	public HttpKnife put(String url) {
+		try {
+			openConnection(new URL(url));
+			connection.setRequestMethod(Method.PUT);
+			connection.setDoOutput(true);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (ProtocolException e) {
+			e.printStackTrace();
+		}
 		return this;
 	}
 

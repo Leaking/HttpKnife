@@ -1,6 +1,5 @@
 package com.httpknife.library;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -8,8 +7,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HTTP;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -66,21 +67,48 @@ public class Response {
 	 * turn reponse content into byte array
 	 */
 	private Response parseContent(){
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		int nRead;
-		byte[] data = new byte[16384];
-		try {
-			InputStream is = response.getEntity().getContent();
-			while ((nRead = is.read(data, 0, data.length)) != -1) {
-			  buffer.write(data, 0, nRead);
-			}
-			buffer.flush();
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		this.contentBytes = buffer.toByteArray();
+		HttpEntity entity = response.getEntity();
+	      ByteArrayPool mPool = new ByteArrayPool(4096);
+
+		 PoolingByteArrayOutputStream bytes =
+	                new PoolingByteArrayOutputStream(mPool, (int) entity.getContentLength());
+	        byte[] buffer = null;
+	        try {
+	            InputStream in = entity.getContent();
+	            if (in == null) {
+	            }
+	            
+	            buffer = mPool.getBuf(1024);
+	            int count;
+	            while ((count = in.read(buffer)) != -1) {
+	                bytes.write(buffer, 0, count);
+	            }
+	            this.contentBytes = bytes.toByteArray();
+	        } catch (IllegalStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} finally {
+	            try {
+	                // Close the InputStream and release the resources by "consuming the content".
+	                entity.consumeContent();
+	            } catch (IOException e) {
+	                // This can happen if there was an exception above that left the entity in
+	                // an invalid state.
+	            }
+	            mPool.returnBuf(buffer);
+	            try {
+					bytes.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	        }
+	        
+	        
+	        
 		if(this.charset == null){
 			throw new IllegalStateException("You have parse charset");
 		}
@@ -122,6 +150,15 @@ public class Response {
 	public JSONObject json(){
 		try {
 			return new JSONObject(contentString);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public JSONArray jsonArray(){
+		try {
+			return new JSONArray(contentString);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
