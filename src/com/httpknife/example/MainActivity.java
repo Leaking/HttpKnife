@@ -24,6 +24,8 @@ import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.httpknife.github.Github;
+import com.httpknife.github.GithubImpl;
 import com.httpknife.library.Base64;
 import com.httpknife.library.HttpKnife;
 import com.httpknife.library.Response;
@@ -31,34 +33,70 @@ import com.httpknife.library.Response;
 public class MainActivity extends Activity {
 
 	private static final String LOG_TAG = "MainActivity";
-	Button btnGet;
-	Button btnVolly;
+	Button createToken;
+	Button removeToken;
+	Button listToken;
 	Handler handler;
+	Github github;
+	
+	String username = "";
+	String password = "";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		btnGet = (Button) findViewById(R.id.get);
-		btnVolly = (Button) findViewById(R.id.volleyget);
-		handler = new Handler(){
-			
-		};
-		btnGet.setOnClickListener(new OnClickListener() {
+		createToken = (Button) findViewById(R.id.createToken);
+		listToken = (Button) findViewById(R.id.listToken);
+		removeToken = (Button) findViewById(R.id.removeToken);
+
+		github = new GithubImpl(MainActivity.this);
+
+		createToken.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				System.out.println("clickckckc");
-				//loginWithToken();
+				System.out.println("createToken");
+				new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						github.createToken(username, password);
+					}
+				}).start();
 			}
 		});
-		btnVolly.setOnClickListener(new OnClickListener() {
+		listToken.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				volleyEvnent();
+				System.out.println("listToken");
+				new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						github.listToken(username, password);
+					}
+				}).start();
+
 			}
 		});
+		removeToken.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				System.out.println("removeToken");
+				new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						github.removeToken(username, password);
+					}
+				}).start();
+
+			}
+		});
+
 	}
 
 	/**
@@ -201,9 +239,7 @@ public class MainActivity extends Activity {
 		}).start();
 	}
 
-	
-	
-	public void getOrCreateToken(final String username,final String password){
+	public void getOrCreateToken(final String username, final String password) {
 		final String url = "https://api.github.com/authorizations";
 
 		new Thread(new Runnable() {
@@ -224,16 +260,13 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 				}
 
-				Response response = http.get(url).headers(headers)
-						.response();
+				Response response = http.get(url).headers(headers).response();
 				testResult(response);
 			}
 		}).start();
 
 	}
-	
-	
-	
+
 	public void token(final String username, final String password) {
 		final String url = "https://api.github.com/authorizations";
 
@@ -251,11 +284,7 @@ public class MainActivity extends Activity {
 				JSONObject json = new JSONObject();
 				try {
 					json.put("note", "Git  Demo");
-					json.put("client_id", "c98401xxxxxf5f549509");
-					json.put("client_secret", "f3afc8xxxx7223220273118fb52cc59bb3eaab8");
-					json.put("note_url", "https://github.com/Leaking/GIthubKnife");
 
-						
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
@@ -267,8 +296,8 @@ public class MainActivity extends Activity {
 		}).start();
 
 	}
-	
-	public void events(){
+
+	public void events() {
 		final String url = "https://api.github.com/users/Leaking/received_events?page=1&per_page=10";
 
 		new Thread(new Runnable() {
@@ -285,48 +314,48 @@ public class MainActivity extends Activity {
 				Response response = http.get(url).headers(headers).response();
 				try {
 					JSONArray jsonArray = new JSONArray(response.body());
-					for(int i = 0; i < jsonArray.length(); i++){
+					for (int i = 0; i < jsonArray.length(); i++) {
 						System.out.println(jsonArray.get(i));
 					}
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
-				//testResult(response);
+				// testResult(response);
 			}
 		}).start();
 	}
-	
-	public void volleyEvnent(){
-//		final String url = "https://api.github.com/users/Leaking/received_events?page=2";
+
+	public void volleyEvnent() {
+		// final String url =
+		// "https://api.github.com/users/Leaking/received_events?page=2";
 		final String url = "https://api.github.com/users/Leaking/received_events/public";
 
-		
 		Map<String, String> headers = new HashMap<String, String>();
 		headers.put("Accept", "application/vnd.github.beta+json");
 		headers.put("User-Agent", "GitHubJava/2.1.0");
-//		headers.put("Authorization",
-//				"Token xxxxxxb6c22e25e64fff6f9dc7618a7f54f9733");
+		// headers.put("Authorization",
+		// "Token xxxxxxb6c22e25e64fff6f9dc7618a7f54f9733");
 		RequestQueue queue = Volley.newRequestQueue(this);
-		JsonObjectRequest rq = new JsonObjectRequest(headers, url, null, new Listener<JSONObject>() {
+		JsonObjectRequest rq = new JsonObjectRequest(headers, url, null,
+				new Listener<JSONObject>() {
 
-			@Override
-			public void onResponse(JSONObject response) {
-				// TODO Auto-generated method stub
-				System.out.println("response =====");
-				System.out.println(response.toString());
-			}
-		}, new ErrorListener() {
+					@Override
+					public void onResponse(JSONObject response) {
+						// TODO Auto-generated method stub
+						System.out.println("response =====");
+						System.out.println(response.toString());
+					}
+				}, new ErrorListener() {
 
-			@Override
-			public void onErrorResponse(VolleyError error) {
-				// TODO Auto-generated method stub
-				System.out.println("error =====");
-				System.out.println(error);
-			}
-		});
+					@Override
+					public void onErrorResponse(VolleyError error) {
+						// TODO Auto-generated method stub
+						System.out.println("error =====");
+						System.out.println(error);
+					}
+				});
 		queue.add(rq);
 	}
-	
 
 	public void testResult(Response response) {
 		System.out.println(response.statusCode());

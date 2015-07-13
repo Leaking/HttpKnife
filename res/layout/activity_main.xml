@@ -2,19 +2,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="com.httpknife.example.MainActivity" >
 
     <Button
-        android:id="@+id/get"
+        android:id="@+id/createToken"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="get" />
+        android:text="createToken" />
 
     <Button
-        android:id="@+id/volleyget"
+        android:id="@+id/listToken"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="volleyget"
+        android:text="listTokenc"
        />
+    
+    <Button
+        android:id="@+id/removeToken"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="removeToken"
+        />
     
 </LinearLayout>

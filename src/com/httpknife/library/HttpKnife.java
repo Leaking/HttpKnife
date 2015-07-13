@@ -6,14 +6,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -92,7 +90,6 @@ public class HttpKnife {
 	private boolean connect = false;
 	private OutputStream output;
 	private Context context;
-	private Map<String, String> customHeaders;
 
 	/**
 	 * 构造器
@@ -124,17 +121,13 @@ public class HttpKnife {
 		connection.setDoInput(true);
 	}
 
-	private void addHeaders(HashMap<String, String> headers) {
-		for (String headerName : headers.keySet()) {
-			addHeader(headerName, headers.get(headerName));
-		}
-	}
 
-	public void addHeader(String name, String value) {
+	public HttpKnife header(String name, String value) {
 		if (connection == null) {
 			throw new IllegalStateException("You have not build the connection");
 		}
 		connection.setRequestProperty(name, value);
+		return this;
 	}
 
 	public String getResponseheader(final String name) {
@@ -142,7 +135,7 @@ public class HttpKnife {
 	}
 
 	public HttpKnife gzip() {
-		addHeader(RequestHeader.HEADER_ACCEPT_ENCODING, GZIP);
+		header(RequestHeader.HEADER_ACCEPT_ENCODING, GZIP);
 		return this;
 	}
 
@@ -161,7 +154,7 @@ public class HttpKnife {
 
 	public HttpKnife headers(Map<String, String> headers) {
 		for (String key : headers.keySet()) {
-			addHeader(key, headers.get(key));
+			header(key, headers.get(key));
 		}
 		return this;
 	}
@@ -246,7 +239,7 @@ public class HttpKnife {
 			if (!connect) {
 				String contentType = getBodyContentType(CONTENT_TYPE_FORM,
 						getParamsEncoding());
-				addHeader(RequestHeader.CONTENT_TYPE, contentType);
+				header(RequestHeader.CONTENT_TYPE, contentType);
 			}
 			String encoding = getParamsEncoding();
 			StringBuilder encodedParams = new StringBuilder();
@@ -271,7 +264,7 @@ public class HttpKnife {
 		try {
 			String contentType = getBodyContentType(CONTENT_TYPE_JSON,
 					getParamsEncoding());
-			addHeader(RequestHeader.CONTENT_TYPE, contentType);
+			header(RequestHeader.CONTENT_TYPE, contentType);
 			byte[] body = json.toString().getBytes(getParamsEncoding());
 			DataOutputStream out = new DataOutputStream(openOutput());
 			out.write(body);
@@ -296,7 +289,7 @@ public class HttpKnife {
 	public HttpKnife mutipart(Map<String, String> params, String name,
 			String filename, File file) {
 		try {
-			addHeader(RequestHeader.CONTENT_TYPE, getMutiPartBodyContentType());
+			header(RequestHeader.CONTENT_TYPE, getMutiPartBodyContentType());
 			DataOutputStream dos = new DataOutputStream(openOutput());
 			if (params != null) {
 				for (Entry<String, String> entry : params.entrySet()) {
@@ -486,9 +479,10 @@ public class HttpKnife {
 	 * @param username
 	 * @param password
 	 */
-	public void basicAuthorization(String username, String password) {
-		addHeader(RequestHeader.AUTHORIZATION,
+	public HttpKnife basicAuthorization(String username, String password) {
+		header(RequestHeader.AUTHORIZATION,
 				"Basic " + Base64.encode(username + ':' + password));
+		return this;
 	}
 
 	/**
