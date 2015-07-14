@@ -40,8 +40,8 @@ public class MainActivity extends Activity {
 	Handler handler;
 	Github github;
 	
-	String username = "Leaking";
-	String password = "3982895898github";
+	String username = "";
+	String password = "";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
