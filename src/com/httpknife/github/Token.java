@@ -75,10 +75,10 @@ public class Token {
 	public void setUrl(String url) {
 		this.url = url;
 	}
-	public List<String> getScropes() {
+	public List<String> getScopes() {
 		return scopes;
 	}
-	public void setScropes(List<String> scropes) {
+	public void setScopes(List<String> scropes) {
 		this.scopes = scropes;
 	}
 	public String getToken() {
@@ -138,7 +138,7 @@ public class Token {
 	
 	@Override
 	public String toString() {
-		return "Token [id=" + id + ", url=" + url + ", scropes=" + scopes 
+		return "Token [id=" + id + ", url=" + url + ", scopes=" + scopes 
 				+ ", token=" + token + ", hashed_token=" + hashed_token
 				+ ", token_last_eight=" + token_last_eight + ", note=" + note
 				+ ", note_url=" + note_url + ", created_at=" + created_at

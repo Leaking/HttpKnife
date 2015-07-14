@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
 
 					@Override
 					public void run() {
-						github.listToken(username, password);
+						github.findCertainTokenID(username, password);
 					}
 				}).start();
 

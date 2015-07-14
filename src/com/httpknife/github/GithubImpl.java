@@ -47,12 +47,13 @@ public class GithubImpl implements Github{
 		JSONObject json = new JSONObject();
 		try {
 			json.put("note", TOKEN_NOTE);
-			json.put("scopes", new String[]{"public_repo","repo"});
+			//json.put("scopes", new String[]{"public_repo","repo"});
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		Response response = http.post(CREATE_TOKEN).headers(configreHttpHeader()).basicAuthorization(username, password).json(json)
 				.response();
+		testResult(response);
 		if(response.statusCode() == 422){
 			//
 			return null;
@@ -62,21 +63,25 @@ public class GithubImpl implements Github{
 	}
 
 	@Override
-	public String listToken(String username,String password){
+	public String findCertainTokenID(String username,String password){
 		Response response = http.get(LIST_TOKENS).headers(configreHttpHeader()).basicAuthorization(username, password).response();
 		Gson gson = new Gson();
 		ArrayList<Token> tokenList = gson.fromJson(response.body(), new TypeToken<List<Token>>() {}.getType());
+		
 		System.out.println("listToken gson = " + tokenList);
+		for(int i = 0; i < tokenList.size(); i++){
+			Token token = tokenList.get(i);
+			if(TOKEN_NOTE.equals(token.getNote()))
+				return String.valueOf(token.getId());
+		}
 		return "";
 	}
 
 	@Override
 	public void removeToken(String username,String password){
-		//String id = listToken(username,password);
-		String id = "20030183";
+		String id = findCertainTokenID(username,password);
 		Response response = http.delete(REMOVE_TOKEN + id).headers(configreHttpHeader()).basicAuthorization(username, password).response();
 		testResult(response);
-
 	}
 
 	@Override

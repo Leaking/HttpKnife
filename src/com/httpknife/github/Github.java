@@ -24,7 +24,7 @@ public interface Github {
 	/**
 	 * List all token,the "token" attribute is empty.
 	 */
-	public String listToken(String username,String password);
+	public String findCertainTokenID(String username,String password);
 	
 	
 	/**

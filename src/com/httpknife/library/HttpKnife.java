@@ -498,6 +498,7 @@ public class HttpKnife {
 			if (connect) {
 				output.flush();
 				output.close();
+				connect = false;
 			}
 			BasicHttpResponse httpResponse = new BasicHttpResponse(
 					statusLineFromConnection());
