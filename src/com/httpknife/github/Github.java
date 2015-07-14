@@ -18,23 +18,23 @@ public interface Github {
 	 * If the token has already existed,list all token and find it out,remove it and recreate it.
 	 * @return
 	 */
-	public String createToken(String username,String password);
+	public String createToken(String username,String password) throws IllegalStateException;
 	
 	
 	/**
 	 * List all token,the "token" attribute is empty.
 	 */
-	public String findCertainTokenID(String username,String password);
+	public String findCertainTokenID(String username,String password) throws IllegalStateException;
 	
 	
 	/**
 	 * Remove token
 	 */
-	public void removeToken(String username,String password);	
+	public void removeToken(String username,String password) throws IllegalStateException;
 	
 	/**
 	 * login 
 	 */
-	public void loginUser(String token);
+	public void loginUser(String token) throws IllegalStateException;
 	
 }

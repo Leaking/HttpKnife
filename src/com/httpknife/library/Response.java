@@ -23,10 +23,17 @@ public class Response {
 	private Map<String,String> headers;
 	private String charset;
 	private boolean hasParseHeader = false;
-	
 	private HttpResponse response;
 	
+	private boolean requestSuccess;// network problem
+	
+	
+	public Response(){
+		this.requestSuccess = true;
+	}
+	
 	public Response(HttpResponse response){
+		this();
 		this.response = response;
 		parseStatusCode().parseReasonPhrase().parseHeaders().parseContent();
 	}
@@ -180,11 +187,12 @@ public class Response {
 		return response;
 	}
 	
-	public boolean success(){
-		if(statusCode >= 200 && statusCode < 300)
-			return true;
-		else
-			return false;
+	public void setSuccess(boolean isSuccess){
+		this.requestSuccess = isSuccess;
+	}
+	
+	public boolean isSuccess(){
+		return this.requestSuccess;
 	}
 	
 	

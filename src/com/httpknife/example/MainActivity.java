@@ -36,6 +36,7 @@ public class MainActivity extends Activity {
 	Button createToken;
 	Button removeToken;
 	Button listToken;
+    Button loginUser;
 	Handler handler;
 	Github github;
 	
@@ -49,7 +50,7 @@ public class MainActivity extends Activity {
 		createToken = (Button) findViewById(R.id.createToken);
 		listToken = (Button) findViewById(R.id.listToken);
 		removeToken = (Button) findViewById(R.id.removeToken);
-
+		loginUser = (Button) findViewById(R.id.user);
 		github = new GithubImpl(MainActivity.this);
 
 		createToken.setOnClickListener(new OnClickListener() {
@@ -61,7 +62,12 @@ public class MainActivity extends Activity {
 
 					@Override
 					public void run() {
-						github.createToken(username, password); 
+						try {
+							github.createToken(username, password);
+						} catch (IllegalStateException e) {
+							e.printStackTrace();
+							System.out.println("网络不好");
+						} 
 					}
 				}).start();
 			}
@@ -94,6 +100,23 @@ public class MainActivity extends Activity {
 					}
 				}).start();
 
+			}
+		});
+		
+		loginUser.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				System.out.println("loginuser");
+				new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						String token = github.createToken(username, password);
+						System.out.println("拿到token ＝ " + token);
+						github.loginUser(token);
+					}
+				}).start();
 			}
 		});
 

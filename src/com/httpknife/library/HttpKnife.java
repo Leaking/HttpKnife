@@ -32,8 +32,6 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 
-
-
 public class HttpKnife {
 
 	/**
@@ -71,7 +69,6 @@ public class HttpKnife {
 	private static final String MUTIPART_END_LINE = "--" + BOUNDARY + "--"
 			+ CRLF;
 	private static final String GZIP = "gzip";
-
 
 	public interface RequestHeader {
 		public static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding";
@@ -122,7 +119,6 @@ public class HttpKnife {
 		connection.setUseCaches(true);
 		connection.setDoInput(true);
 	}
-
 
 	public HttpKnife header(String name, String value) {
 		if (connection == null) {
@@ -270,13 +266,12 @@ public class HttpKnife {
 			byte[] body = json.toString().getBytes(getParamsEncoding());
 			DataOutputStream out = new DataOutputStream(openOutput());
 			out.write(body);
-			return this;
 		} catch (ProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return null;
+		return this;
 	}
 
 	/**
@@ -299,7 +294,7 @@ public class HttpKnife {
 					partString(entry.getKey(), entry.getValue());
 				}
 			}
-			if (name == null || file == null){
+			if (name == null || file == null) {
 				dos.writeBytes(MUTIPART_END_LINE);
 				return this;
 			}
@@ -486,6 +481,12 @@ public class HttpKnife {
 				"Basic " + Base64.encode(username + ':' + password));
 		return this;
 	}
+	
+	public HttpKnife tokenAuthorization(String token){
+		header(RequestHeader.AUTHORIZATION,
+				"Token " + token);
+		return this;
+	}
 
 	/**
 	 * 获取响应报文
@@ -500,17 +501,18 @@ public class HttpKnife {
 				output.close();
 				connect = false;
 			}
-			BasicHttpResponse httpResponse = new BasicHttpResponse(
-					statusLineFromConnection());
+			StatusLine statusLine = statusLineFromConnection();
+			BasicHttpResponse httpResponse = new BasicHttpResponse(statusLine);
 			httpResponse.setEntity(entityFromConnection());
 			headersFromConnection(httpResponse);
 			Response response = new Response(httpResponse);
 			return response;
 		} catch (IOException e) {
 			e.printStackTrace();
+			Response response = new Response();
+			response.setSuccess(false);
+			return response;
 		}
-
-		return null;
 	}
 
 	/**
@@ -521,12 +523,13 @@ public class HttpKnife {
 	 */
 	private StatusLine statusLineFromConnection() throws IOException {
 		ProtocolVersion protocolVersion = new ProtocolVersion("HTTP", 1, 1);
+		StatusLine responseStatus = null;
 		int responseCode = connection.getResponseCode();
 		if (responseCode == -1) {
 			throw new IOException(
 					"Could not retrieve response code from HttpUrlConnection.");
 		}
-		StatusLine responseStatus = new BasicStatusLine(protocolVersion,
+		responseStatus = new BasicStatusLine(protocolVersion,
 				connection.getResponseCode(), connection.getResponseMessage());
 		return responseStatus;
 	}
