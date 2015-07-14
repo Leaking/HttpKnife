@@ -39,8 +39,8 @@ public class MainActivity extends Activity {
 	Handler handler;
 	Github github;
 	
-	String username = "";
-	String password = "";
+	String username = "Leaking";
+	String password = "3982895898github";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +61,7 @@ public class MainActivity extends Activity {
 
 					@Override
 					public void run() {
-						github.createToken(username, password);
+						github.createToken(username, password); 
 					}
 				}).start();
 			}

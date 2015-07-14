@@ -1,6 +1,8 @@
 package com.httpknife.github;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONException;
@@ -8,7 +10,8 @@ import org.json.JSONObject;
 
 import android.content.Context;
 
-import com.httpknife.library.Base64;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.httpknife.library.HttpKnife;
 import com.httpknife.library.Response;
 
@@ -44,20 +47,26 @@ public class GithubImpl implements Github{
 		JSONObject json = new JSONObject();
 		try {
 			json.put("note", TOKEN_NOTE);
+			json.put("scopes", new String[]{"public_repo","repo"});
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		Response response = http.post(CREATE_TOKEN).headers(configreHttpHeader()).basicAuthorization(username, password).json(json)
 				.response();
-		testResult(response);
-		return null;
+		if(response.statusCode() == 422){
+			//
+			return null;
+		}
+		Token token = new Gson().fromJson(response.body(),Token.class);
+		return token.getNote();
 	}
 
 	@Override
 	public String listToken(String username,String password){
 		Response response = http.get(LIST_TOKENS).headers(configreHttpHeader()).basicAuthorization(username, password).response();
-		testResult(response);
-
+		Gson gson = new Gson();
+		ArrayList<Token> tokenList = gson.fromJson(response.body(), new TypeToken<List<Token>>() {}.getType());
+		System.out.println("listToken gson = " + tokenList);
 		return "";
 	}
 
