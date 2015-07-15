@@ -1,5 +1,6 @@
 package com.httpknife.github;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -37,4 +38,14 @@ public interface Github {
 	 */
 	public void loginUser(String token) throws IllegalStateException;
 	
+
+	public List<User> myFollwers(String token) throws IllegalStateException;
+	
+	public List<User> myFollwerings(String token) throws IllegalStateException;
+	
+	public List<User> follwerings(String user) throws IllegalStateException;
+	
+	public List<User> followers(String user) throws IllegalStateException;
+
+
 }

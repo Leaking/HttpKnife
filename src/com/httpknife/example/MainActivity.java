@@ -3,6 +3,7 @@ package com.httpknife.example;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -26,6 +27,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.httpknife.github.Github;
 import com.httpknife.github.GithubImpl;
+import com.httpknife.github.User;
 import com.httpknife.library.Base64;
 import com.httpknife.library.HttpKnife;
 import com.httpknife.library.Response;
@@ -37,11 +39,12 @@ public class MainActivity extends Activity {
 	Button removeToken;
 	Button listToken;
     Button loginUser;
+    Button myFollowers;
 	Handler handler;
 	Github github;
 	
-	String username = "";
-	String password = "";
+	String username = "0";
+	String password = "0";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +54,7 @@ public class MainActivity extends Activity {
 		listToken = (Button) findViewById(R.id.listToken);
 		removeToken = (Button) findViewById(R.id.removeToken);
 		loginUser = (Button) findViewById(R.id.user);
+		myFollowers = (Button) findViewById(R.id.myFollowers);
 		github = new GithubImpl(MainActivity.this);
 
 		createToken.setOnClickListener(new OnClickListener() {
@@ -115,6 +119,30 @@ public class MainActivity extends Activity {
 						String token = github.createToken(username, password);
 						System.out.println("拿到token ＝ " + token);
 						github.loginUser(token);
+					}
+				}).start();
+			}
+		});
+		
+		myFollowers.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				System.out.println("myFollowers");
+				new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						
+						
+						try {
+							String token = github.createToken(username, password);
+							List<User> followers = github.myFollwers(token);
+							System.out.println("my followers =  "+ followers);
+						} catch (IllegalStateException e) {
+							e.printStackTrace();
+							System.out.println("网络不好");
+						} 
 					}
 				}).start();
 			}
@@ -380,6 +408,8 @@ public class MainActivity extends Activity {
 		queue.add(rq);
 	}
 
+	
+	
 	public void testResult(Response response) {
 		System.out.println(response.statusCode());
 		System.out.println(response.headers());

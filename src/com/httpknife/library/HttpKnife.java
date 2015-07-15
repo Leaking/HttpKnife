@@ -107,6 +107,7 @@ public class HttpKnife {
 	private void openConnection(URL url) {
 		try {
 			connection = (HttpURLConnection) url.openConnection();
+			connection.setReadTimeout(5000);
 			initConnection();
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -15,21 +15,24 @@
         android:id="@+id/listToken"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="listTokenc"
-       />
-    
+        android:text="listTokenc" />
+
     <Button
         android:id="@+id/removeToken"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="removeToken"
-        />
-    
+        android:text="removeToken" />
+
     <Button
         android:id="@+id/user"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="user"
-        />
-    
+        android:text="user" />
+
+    <Button
+        android:id="@+id/myFollowers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="myFollowers" />
+
 </LinearLayout>

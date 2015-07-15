@@ -31,6 +31,11 @@ public class GithubImpl implements Github {
 	public final static String REMOVE_TOKEN = API_HOST + "authorizations"
 			+ URL_SPLITTER; // DELETE
 	public final static String LOGIN_USER = API_HOST +"user";
+	public final static String MY_FOLLOWERS = API_HOST +"user/followers";
+	public final static String MY_FOLLOWERSINGS = API_HOST +"user/following";
+	
+	
+	
 
 	private HttpKnife http;
 
@@ -53,6 +58,9 @@ public class GithubImpl implements Github {
 				.basicAuthorization(username, password).json(json).response();
 		if (response.isSuccess() == false)
 			throw new IllegalStateException("网络链接有问题");
+		if(response.statusCode() == 401){
+			//账号密码错误
+		}
 		testResult(response);
 		if (response.statusCode() == 422) {
 			removeToken(username, password);
@@ -103,6 +111,9 @@ public class GithubImpl implements Github {
 		testResult(response);
 	}
 
+	
+	
+	
 	@Override
 	public Map<String, String> configreHttpHeader() {
 		Map<String, String> headers = new HashMap<String, String>();
@@ -111,10 +122,63 @@ public class GithubImpl implements Github {
 		return headers;
 	}
 
+
+
+	@Override
+	public List<User> myFollwers(String token) throws IllegalStateException {
+		Response response = http.get(MY_FOLLOWERS).headers(configreHttpHeader()).tokenAuthorization(token).response();
+		if (response.isSuccess() == false)
+			throw new IllegalStateException("网络链接有问题");
+		Gson gson = new Gson();
+		ArrayList<User> tokenList = gson.fromJson(response.body(),
+				new TypeToken<List<User>>() {
+				}.getType());
+		return tokenList;
+	}
+
+	@Override
+	public List<User> myFollwerings(String token) throws IllegalStateException {
+		Response response = http.get(MY_FOLLOWERSINGS).headers(configreHttpHeader()).tokenAuthorization(token).response();
+		if (response.isSuccess() == false)
+			throw new IllegalStateException("网络链接有问题");
+		Gson gson = new Gson();
+		ArrayList<User> tokenList = gson.fromJson(response.body(),
+				new TypeToken<List<User>>() {
+				}.getType());
+		return tokenList;
+	}
+
+	@Override
+	public List<User> follwerings(String user) throws IllegalStateException {
+		String url = API_HOST + "users/" + user + "/followering";
+		Response response = http.get(url).headers(configreHttpHeader()).response();
+		if (response.isSuccess() == false)
+			throw new IllegalStateException("网络链接有问题");
+		Gson gson = new Gson();
+		ArrayList<User> tokenList = gson.fromJson(response.body(),
+				new TypeToken<List<User>>() {
+				}.getType());
+		return tokenList;	}
+
+	@Override
+	public List<User> followers(String user) throws IllegalStateException {
+		String url = API_HOST + "users/" + user + "/followers";
+		Response response = http.get(url).headers(configreHttpHeader()).response();
+		if (response.isSuccess() == false)
+			throw new IllegalStateException("网络链接有问题");
+		Gson gson = new Gson();
+		ArrayList<User> tokenList = gson.fromJson(response.body(),
+				new TypeToken<List<User>>() {
+				}.getType());
+		return tokenList;
+	}
+
+	
+	
 	public void testResult(Response response) {
 		System.out.println(response.statusCode());
 		System.out.println(response.headers());
 		System.out.println(response.body());
 	}
-
+	
 }
