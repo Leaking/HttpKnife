@@ -32,6 +32,12 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 
+
+/**
+ * 
+ * @author Quinn Chen
+ *
+ */
 public class HttpKnife {
 
 	/**
@@ -48,51 +54,62 @@ public class HttpKnife {
 		String PATCH = "PATCH";
 	}
 
+	/**
+	 * String constant value
+	 */
 	private static final String CRLF = "\r\n";
 	private static final String CHARSET_UTF8 = "UTF-8";
-	/**
-	 * 提交字符串形式的键值对，post请求
-	 */
-	private static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
-
-	/**
-	 * 'application/json' content type header value
-	 */
-	private static final String CONTENT_TYPE_JSON = "application/json";
-
 	private static final String BOUNDARY = "00content0boundary00";
-
-	private static final String CONTENT_TYPE_MULTIPART = "multipart/form-data; boundary="
-			+ BOUNDARY;
-
 	private static final String MUTIPART_LINE = "--" + BOUNDARY + CRLF;
 	private static final String MUTIPART_END_LINE = "--" + BOUNDARY + "--"
 			+ CRLF;
 	private static final String GZIP = "gzip";
+	public static final int DEFAULT_CONNECT_TIMEOUT_MS = 2500;
+	public static final int DEFAULT_READ_TIMEOUT_MS = 2500;
 
+
+	
+	/**
+	 * post－request:key-value
+	 */
+	private static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
+
+	/**
+	 * post－request:JSON
+	 */
+	private static final String CONTENT_TYPE_JSON = "application/json";
+
+	/**
+	 * post－request:mutipart
+	 */
+	private static final String CONTENT_TYPE_MULTIPART = "multipart/form-data; boundary="
+			+ BOUNDARY;
+
+	/**
+	 * Request Header
+	 */
 	public interface RequestHeader {
 		public static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding";
 		public static final String USER_AGENT = "User-Agent";
 		public static final String CONTENT_TYPE = "Content-Type";
 		public static final String AUTHORIZATION = "Authorization";
-
+		public static final String ACCEPT = "Accept";
 	}
 
+	/**
+	 * Response Header
+	 */
 	public interface ResponseHeader {
 		public static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
 	}
 
-	public static final int DEFAULT_CONNECT_TIMEOUT_MS = 2500;
-	public static final int DEFAULT_READ_TIMEOUT_MS = 2500;
-
+	
 	private HttpURLConnection connection;
 	private boolean connect = false;
 	private OutputStream output;
 	private Context context;
 
 	/**
-	 * 构造器
-	 * 
 	 * @param context
 	 */
 	public HttpKnife(Context context) {
@@ -100,8 +117,6 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 根据url建立一个新连接
-	 * 
 	 * @param url
 	 */
 	private void openConnection(URL url) {
@@ -114,6 +129,9 @@ public class HttpKnife {
 		}
 	}
 
+	/**
+	 * init connection
+	 */
 	private void initConnection() {
 		connection.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT_MS);
 		connection.setReadTimeout(DEFAULT_READ_TIMEOUT_MS);
@@ -121,6 +139,9 @@ public class HttpKnife {
 		connection.setDoInput(true);
 	}
 
+	/**
+	 * Set a pair of key-value for header
+	 */
 	public HttpKnife header(String name, String value) {
 		if (connection == null) {
 			throw new IllegalStateException("You have not build the connection");
@@ -129,15 +150,29 @@ public class HttpKnife {
 		return this;
 	}
 
+	/**
+	 * Get a certain header value of a certain key
+	 * @param name
+	 * @return
+	 */
 	public String getResponseheader(final String name) {
 		return connection.getHeaderField(name);
 	}
 
+	
+	/**
+	 * Set gzip
+	 * @return
+	 */
 	public HttpKnife gzip() {
 		header(RequestHeader.HEADER_ACCEPT_ENCODING, GZIP);
 		return this;
 	}
 
+	/**
+	 * Generate user agent
+	 * @return
+	 */
 	public String getCustomUserAgent() {
 		String userAgent = "Request/0";
 		try {
@@ -151,6 +186,11 @@ public class HttpKnife {
 		return userAgent;
 	}
 
+	/**
+	 * Set some header
+	 * @param headers
+	 * @return
+	 */
 	public HttpKnife headers(Map<String, String> headers) {
 		for (String key : headers.keySet()) {
 			header(key, headers.get(key));
@@ -159,7 +199,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 不带参数的get请求
+	 * Get-Request without parameters
 	 * 
 	 * @param url
 	 * @return
@@ -178,7 +218,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 带参数的get请求
+	 * Get-Request with parameters
 	 * 
 	 * @param url
 	 * @param params
@@ -187,13 +227,11 @@ public class HttpKnife {
 	public HttpKnife get(String url, Map<?, ?> params) {
 		UrlRewriter rw = new DefaultUriRewriter();
 		url = rw.rewriteWithParam(url, params);
-		System.out.println("encode and add params url =========");
-		System.out.println(url);
 		return get(url);
 	}
 
 	/**
-	 * post请求初始化
+	 * Init Post-Request
 	 * 
 	 * @param url
 	 * @throws ProtocolException
@@ -213,8 +251,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * post请求，mutipart类型
-	 * 
+	 * Open output Stream
 	 * @param url
 	 * @param params
 	 * @param filename
@@ -232,7 +269,13 @@ public class HttpKnife {
 			return output;
 		}
 	}
-
+	
+	
+	/**
+	 * Post-Request with key-value
+	 * @param params
+	 * @return
+	 */
 	public HttpKnife form(Map<String, String> params) {
 		try {
 			if (!connect) {
@@ -242,7 +285,7 @@ public class HttpKnife {
 			}
 			String encoding = getParamsEncoding();
 			StringBuilder encodedParams = new StringBuilder();
-			for (Map.Entry<String, String> entry : params.entrySet()) {
+			for (Entry<String, String> entry : params.entrySet()) {
 				encodedParams
 						.append(URLEncoder.encode(entry.getKey(), encoding));
 				encodedParams.append('=');
@@ -259,6 +302,11 @@ public class HttpKnife {
 		return this;
 	}
 
+	/**
+	 * Post-Request with JSON
+	 * @param json
+	 * @return
+	 */
 	public HttpKnife json(JSONObject json) {
 		try {
 			String contentType = getBodyContentType(CONTENT_TYPE_JSON,
@@ -276,7 +324,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * post表格，包含字键值，文件
+	 * Post-Request with mutipart
 	 * 
 	 * @param params
 	 * @param encoding
@@ -300,7 +348,7 @@ public class HttpKnife {
 				return this;
 			}
 			if (filename == null || filename.isEmpty()) {
-				throw new IllegalArgumentException("上次文件的文件名不能为空");
+				throw new IllegalArgumentException("The file name must not be null");
 			}
 			dos.writeBytes(MUTIPART_LINE);
 			partFile(name, filename, file);
@@ -314,16 +362,16 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 提交字符串
+	 * Post-Request: mutipart-partString
 	 * 
 	 * @param dos
 	 * @param key
 	 * @param value
 	 * @throws IOException
 	 */
-	public HttpKnife partString(String key, String value) throws IOException {
+	private HttpKnife partString(String key, String value) throws IOException {
 		if (value == null || value.isEmpty())
-			throw new IllegalArgumentException("上传键值对不能为空");
+			throw new IllegalArgumentException("The value must not be null");
 		DataOutputStream dos = new DataOutputStream(openOutput());
 		dos.writeBytes("Content-Disposition: form-data; name=\"" + key + "\""
 				+ CRLF);
@@ -334,7 +382,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 提交文件
+	 * Post-Request: mutipart-partFile
 	 * 
 	 * @param dos
 	 * @param name
@@ -342,7 +390,7 @@ public class HttpKnife {
 	 * @param file
 	 * @throws IOException
 	 */
-	public HttpKnife partFile(String name, String fileName, File file)
+	private HttpKnife partFile(String name, String fileName, File file)
 			throws IOException {
 		DataOutputStream dos = new DataOutputStream(openOutput());
 		dos.writeBytes("Content-Disposition: form-data; name=\"" + name
@@ -365,7 +413,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 后去mutipart的contenttype
+	 * Generate ContentType
 	 * 
 	 * @return
 	 */
@@ -374,7 +422,6 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 请求主体媒体类型以及编码格式
 	 * 
 	 * @param contentType
 	 * @param charset
@@ -385,7 +432,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 请求主体编码格式
+	 * Request body encoding
 	 * 
 	 * @return
 	 */
@@ -393,6 +440,11 @@ public class HttpKnife {
 		return CHARSET_UTF8;
 	}
 
+	/**
+	 * Put-Request
+	 * @param url
+	 * @return
+	 */
 	public HttpKnife put(String url) {
 		try {
 			openConnection(new URL(url));
@@ -406,8 +458,14 @@ public class HttpKnife {
 		return this;
 	}
 
+	/**
+	 * Delete-Request
+	 * @param url
+	 * @return
+	 */
 	public HttpKnife delete(String url) {
 		try {
+			System.out.println("delete request : " + url);
 			openConnection(new URL(url));
 			connection.setRequestMethod(Method.DELETE);
 			return this;
@@ -419,6 +477,11 @@ public class HttpKnife {
 		return null;
 	}
 
+	/**
+	 * Head-Request
+	 * @param url
+	 * @return
+	 */
 	public HttpKnife head(String url) {
 		try {
 			openConnection(new URL(url));
@@ -432,6 +495,12 @@ public class HttpKnife {
 		return null;
 	}
 
+	
+	/**
+	 * Option-Request
+	 * @param url
+	 * @return
+	 */
 	public HttpKnife option(String url) {
 		try {
 			openConnection(new URL(url));
@@ -445,6 +514,12 @@ public class HttpKnife {
 		return null;
 	}
 
+	
+	/**
+	 * Trace-Request
+	 * @param url
+	 * @return
+	 */
 	public HttpKnife trace(String url) {
 		try {
 			openConnection(new URL(url));
@@ -458,6 +533,12 @@ public class HttpKnife {
 		return null;
 	}
 
+	
+	/**
+	 * Patch-Request
+	 * @param url
+	 * @return
+	 */
 	public HttpKnife patch(String url) {
 		try {
 			openConnection(new URL(url));
@@ -469,6 +550,18 @@ public class HttpKnife {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+
+	/**
+	 * Set 'accept'header
+	 * @param acceptMedia
+	 * @return
+	 */
+	public HttpKnife accept(String acceptMedia){
+		header(RequestHeader.ACCEPT,
+				acceptMedia);
+		return this;
 	}
 
 	/**
@@ -483,14 +576,21 @@ public class HttpKnife {
 		return this;
 	}
 	
+	/**
+	 * Token Authorization
+	 * @param token
+	 * @return
+	 */
 	public HttpKnife tokenAuthorization(String token){
+		if(token == null || token.isEmpty())
+			return this;
 		header(RequestHeader.AUTHORIZATION,
 				"Token " + token);
 		return this;
 	}
 
 	/**
-	 * 获取响应报文
+	 * Get Response
 	 * 
 	 * @return
 	 * @throws IOException
@@ -517,7 +617,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 获取响应报文的起始行
+	 * Get StatusLine
 	 * 
 	 * @return
 	 * @throws IOException
@@ -536,7 +636,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 获取响应报文实体
+	 * Get response 
 	 * 
 	 * @return
 	 * @throws IOException
@@ -561,7 +661,7 @@ public class HttpKnife {
 	}
 
 	/**
-	 * 获取响应报文头部
+	 * Get Response headers
 	 * 
 	 * @param response
 	 */
